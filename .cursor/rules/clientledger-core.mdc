@@ -7,7 +7,9 @@ alwaysApply: true
 
 ClientLedger tracks client time, entertainment expenses, and closed revenue.
 
-**Stack (do not deviate):** Next.js 14 App Router, TypeScript, Tailwind CSS, Supabase (auth + db + storage), Vercel, npm.
+**Stack (do not deviate):** Next.js 14 App Router, TypeScript, Tailwind CSS, shadcn/ui, Recharts, lucide-react, react-hook-form + zod, TanStack Query + Table, date-fns, Supabase (auth + db + storage), Vercel, npm.
+
+UI conventions: see `.cursor/rules/ui.mdc` (light theme, indigo accent, Stripe/Linear-style dashboard).
 
 ## Import boundaries
 

@@ -1,14 +1,15 @@
+import Link from "next/link";
+
 import { NewClientForm } from "@/components/dashboard/NewClientForm";
+import { PageHeader } from "@/components/dashboard/page-header";
 
 export default function NewClientPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-white">Add client</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          Create a client to start logging time and expenses.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Add client"
+        description="Create a client to start logging time and expenses."
+      />
       <NewClientForm />
     </div>
   );

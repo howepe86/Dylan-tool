@@ -1,45 +1,54 @@
-import type { ButtonHTMLAttributes } from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
-type ButtonTone = "dark" | "light";
+import { cn } from "@/lib/utils";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  tone?: ButtonTone;
-  fullWidth?: boolean;
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-indigo-600 text-white hover:bg-indigo-500",
+        destructive: "bg-rose-600 text-white hover:bg-rose-500",
+        outline:
+          "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+        secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
+        ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+        link: "text-indigo-600 underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-lg px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
 }
 
-const darkVariantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-sky-600 text-white hover:bg-sky-500 disabled:bg-sky-600/50",
-  secondary:
-    "border border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800 disabled:opacity-50",
-  ghost: "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-50",
-};
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = "Button";
 
-const lightVariantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-zinc-900 text-white hover:bg-zinc-800 disabled:bg-zinc-400",
-  secondary:
-    "border border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50 disabled:opacity-50",
-  ghost: "text-zinc-600 hover:bg-zinc-100 disabled:opacity-50",
-};
-
-export function Button({
-  variant = "primary",
-  tone = "dark",
-  fullWidth = false,
-  className = "",
-  children,
-  ...props
-}: ButtonProps) {
-  const variantClasses =
-    tone === "light" ? lightVariantClasses : darkVariantClasses;
-
-  return (
-    <button
-      className={`rounded-lg px-6 py-3 text-sm font-semibold shadow-sm ${variantClasses[variant]} ${fullWidth ? "w-full" : ""} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
+export { Button, buttonVariants };

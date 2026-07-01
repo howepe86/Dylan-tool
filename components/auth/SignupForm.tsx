@@ -2,37 +2,49 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { authButtonClass, authLinkClass } from "@/components/auth/auth-styles";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { PasswordInput } from "@/components/ui/PasswordInput";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase";
+
+type SignupValues = {
+  fullName: string;
+  email: string;
+  password: string;
+};
 
 export function SignupForm() {
   const router = useRouter();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const devBypass = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+    setError,
+  } = useForm<SignupValues>({
+    defaultValues: { fullName: "", email: "", password: "" },
+  });
+
+  async function onSubmit(values: SignupValues) {
+    if (devBypass) {
+      await fetch("/api/auth/dev-login", { method: "POST" });
+      router.push("/dashboard");
+      router.refresh();
+      return;
+    }
 
     const supabase = createClient();
     const { error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
+      email: values.email,
+      password: values.password,
+      options: { data: { full_name: values.fullName } },
     });
 
     if (authError) {
-      setError(authError.message);
-      setLoading(false);
+      setError("root", { message: authError.message });
       return;
     }
 
@@ -41,37 +53,35 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Full name"
-        autoComplete="name"
-        required
-        value={fullName}
-        onChange={(event) => setFullName(event.target.value)}
-      />
-      <Input
-        label="Email"
-        type="email"
-        autoComplete="email"
-        required
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-      />
-      <PasswordInput
-        label="Password"
-        autoComplete="new-password"
-        required
-        minLength={8}
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-      />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      <Button type="submit" fullWidth disabled={loading} className={authButtonClass}>
-        {loading ? "Creating account..." : "Create account"}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {devBypass ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Dev mode: click Create account to skip authentication.
+        </p>
+      ) : null}
+      <div className="space-y-2">
+        <Label htmlFor="fullName">Full name</Label>
+        <Input id="fullName" autoComplete="name" {...register("fullName")} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" type="email" autoComplete="email" {...register("email")} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          autoComplete="new-password"
+          {...register("password")}
+        />
+      </div>
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? "Creating account…" : "Create account"}
       </Button>
-      <p className="text-center text-sm text-zinc-400">
+      <p className="text-center text-sm text-slate-500">
         Already have an account?{" "}
-        <Link href="/login" className={authLinkClass}>
+        <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
           Log in
         </Link>
       </p>

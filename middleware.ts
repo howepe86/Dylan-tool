@@ -1,9 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isDevAuthBypassEnabled } from "@/lib/auth/dev-bypass";
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const code = request.nextUrl.searchParams.get("code");
+
+  if (isDevAuthBypassEnabled()) {
+    return NextResponse.next({ request });
+  }
 
   if (code && pathname !== "/api/auth/callback") {
     const url = request.nextUrl.clone();

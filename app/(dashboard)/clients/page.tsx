@@ -1,58 +1,56 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/dashboard/empty-state";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { getAuthUser } from "@/lib/auth/session";
 import { listClients } from "@/lib/db/clients";
-import { createClient } from "@/lib/supabase-server";
+import { Users } from "lucide-react";
 
 export default async function ClientsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getAuthUser();
   if (!user) return null;
 
   const clients = await listClients(user.id);
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Clients</h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            Every lunch, dinner, and outing rolls up here.
-          </p>
-        </div>
-        <Link
-          href="/clients/new"
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500"
-        >
-          Add client
-        </Link>
-      </div>
+      <PageHeader
+        title="Clients"
+        description="Track time, expenses, and revenue for each relationship."
+        actions={
+          <Button asChild>
+            <Link href="/clients/new">Add client</Link>
+          </Button>
+        }
+      />
 
       {clients.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-500">
-          No clients yet.{" "}
-          <Link href="/clients/new" className="text-sky-400 hover:text-sky-300">
-            Add your first client
-          </Link>
-          .
-        </div>
+        <EmptyState
+          title="No clients yet"
+          description="Add the clients you entertain and pursue to start building ROI reports."
+          actionLabel="Add your first client"
+          actionHref="/clients/new"
+          icon={Users}
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {clients.map((client) => (
-            <Link
-              key={client.id}
-              href={`/clients/${client.id}`}
-              className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 hover:border-zinc-700"
-            >
-              <h2 className="text-lg font-semibold text-white">{client.name}</h2>
-              {client.company ? (
-                <p className="text-sm text-zinc-400">{client.company}</p>
-              ) : null}
-              {client.email ? (
-                <p className="mt-2 text-xs text-zinc-500">{client.email}</p>
-              ) : null}
+            <Link key={client.id} href={`/clients/${client.id}`}>
+              <Card className="h-full transition-shadow hover:shadow-md">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {client.name}
+                  </h2>
+                  {client.company ? (
+                    <p className="mt-1 text-sm text-slate-500">{client.company}</p>
+                  ) : null}
+                  {client.email ? (
+                    <p className="mt-3 text-xs text-slate-400">{client.email}</p>
+                  ) : null}
+                </CardContent>
+              </Card>
             </Link>
           ))}
         </div>

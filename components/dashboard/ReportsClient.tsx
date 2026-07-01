@@ -1,12 +1,135 @@
 "use client";
 
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import Link from "next/link";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 
-import { formatMoney } from "@/lib/reports";
-import type { PeriodReport } from "@/types/database";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { PeriodSelector } from "@/components/layout/period-selector";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatCurrency } from "@/lib/format/currency";
+import type { ClientSummary, PeriodReport } from "@/types/database";
 
-export function ReportsClient({
+const columnHelper = createColumnHelper<ClientSummary>();
+
+const columns = [
+  columnHelper.accessor("clientName", {
+    header: "Client",
+    cell: ({ row }) => (
+      <div>
+        <Link
+          href={`/clients/${row.original.clientId}`}
+          className="font-medium text-indigo-600 hover:text-indigo-500"
+        >
+          {row.original.clientName}
+        </Link>
+        {row.original.company ? (
+          <p className="text-xs text-slate-500">{row.original.company}</p>
+        ) : null}
+      </div>
+    ),
+  }),
+  columnHelper.accessor("interactionCount", {
+    header: () => <span className="block text-right">Activities</span>,
+    cell: ({ getValue }) => (
+      <span className="block text-right tabular-nums">{getValue()}</span>
+    ),
+  }),
+  columnHelper.accessor("totalMinutes", {
+    header: () => <span className="block text-right">Hours</span>,
+    cell: ({ getValue }) => (
+      <span className="block text-right tabular-nums">
+        {(getValue() / 60).toFixed(1)}
+      </span>
+    ),
+  }),
+  columnHelper.accessor("totalExpenseCents", {
+    header: () => <span className="block text-right">Expenses</span>,
+    cell: ({ getValue }) => (
+      <span className="block text-right tabular-nums text-rose-600">
+        −{formatCurrency(getValue())}
+      </span>
+    ),
+  }),
+  columnHelper.accessor("closedRevenueCents", {
+    header: () => <span className="block text-right">Closed revenue</span>,
+    cell: ({ getValue }) => (
+      <span className="block text-right tabular-nums text-emerald-600">
+        +{formatCurrency(getValue())}
+      </span>
+    ),
+  }),
+];
+
+function ReportsTable({ rows }: { rows: ClientSummary[] }) {
+  const table = useReactTable({
+    data: rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  if (rows.length === 0) {
+    return (
+      <div className="px-4 py-12 text-center text-sm text-slate-500">
+        No client data for this period.{" "}
+        <Link href="/log" className="font-medium text-indigo-600">
+          Log an activity
+        </Link>
+        .
+      </div>
+    );
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <TableRow key={headerGroup.id}>
+            {headerGroup.headers.map((header) => (
+              <TableHead key={header.id}>
+                {header.isPlaceholder
+                  ? null
+                  : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+              </TableHead>
+            ))}
+          </TableRow>
+        ))}
+      </TableHeader>
+      <TableBody>
+        {table.getRowModel().rows.map((row) => (
+          <TableRow key={row.id}>
+            {row.getVisibleCells().map((cell) => (
+              <TableCell key={cell.id}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+function ReportsContent({
   yearlyReport,
   quarterlyReport,
   year,
@@ -17,157 +140,86 @@ export function ReportsClient({
   year: number;
   quarter: number;
 }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const report = searchParams.get("view") === "year" ? yearlyReport : quarterlyReport;
+  const report =
+    searchParams.get("view") === "year" ? yearlyReport : quarterlyReport;
+
+  const netCents = report.closedRevenueCents - report.totalExpenseCents;
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Reports</h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            Compare client investment vs. revenue closed.
+      <PageHeader
+        title="Reports"
+        description="Compare client investment vs. revenue closed."
+        actions={<PeriodSelector year={year} quarter={quarter} />}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Time invested"
+          value={`${Math.round(report.totalMinutes / 60)}h`}
+        />
+        <KpiCard
+          label="Expenses"
+          value={formatCurrency(report.totalExpenseCents, { compact: true })}
+          tone="expense"
+        />
+        <KpiCard
+          label="Closed revenue"
+          value={formatCurrency(report.closedRevenueCents, { compact: true })}
+          tone="revenue"
+        />
+        <KpiCard
+          label="Net / ROI"
+          value={
+            report.roiPercent === null
+              ? formatCurrency(netCents, { compact: true })
+              : `${netCents >= 0 ? "+" : ""}${formatCurrency(netCents, { compact: true })} · ${report.roiPercent}%`
+          }
+          hint={
+            report.roiPercent === null ? "No expenses to compute ROI" : undefined
+          }
+        />
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <h2 className="text-base font-semibold text-slate-900">
+            Per-client breakdown
+          </h2>
+          <p className="text-sm text-slate-500">
+            {report.periodLabel} ·{" "}
+            <span className="inline-flex items-center gap-1 text-emerald-600">
+              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+              revenue
+            </span>
+            {" · "}
+            <span className="inline-flex items-center gap-1 text-rose-600">
+              <ArrowDownRight className="h-3.5 w-3.5" aria-hidden />
+              expenses
+            </span>
+            {" · "}
+            <span className="inline-flex items-center gap-1 text-slate-600">
+              <Minus className="h-3.5 w-3.5" aria-hidden />
+              net
+            </span>
           </p>
         </div>
-        <div className="flex gap-2">
-          <select
-            value={year}
-            onChange={(event) =>
-              router.push(`/reports?year=${event.target.value}&quarter=${quarter}`)
-            }
-            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
-          >
-            {[2024, 2025, 2026, 2027].map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-          <select
-            value={quarter}
-            onChange={(event) =>
-              router.push(`/reports?year=${year}&quarter=${event.target.value}`)
-            }
-            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
-          >
-            {[1, 2, 3, 4].map((q) => (
-              <option key={q} value={q}>
-                Q{q}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <ViewTab
-          active={searchParams.get("view") !== "year"}
-          label={`Q${quarter} ${year}`}
-          onClick={() => router.push(`/reports?year=${year}&quarter=${quarter}`)}
-        />
-        <ViewTab
-          active={searchParams.get("view") === "year"}
-          label={`${year} full year`}
-          onClick={() =>
-            router.push(`/reports?year=${year}&quarter=${quarter}&view=year`)
-          }
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Time invested" value={`${Math.round(report.totalMinutes / 60)}h`} />
-        <StatCard label="Expenses" value={formatMoney(report.totalExpenseCents)} />
-        <StatCard label="Closed revenue" value={formatMoney(report.closedRevenueCents)} />
-        <StatCard
-          label="ROI"
-          value={
-            report.roiPercent === null ? "—" : `${report.roiPercent}%`
-          }
-        />
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-zinc-800">
-        <table className="min-w-full text-sm">
-          <thead className="bg-zinc-900 text-left text-zinc-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Client</th>
-              <th className="px-4 py-3 font-medium">Activities</th>
-              <th className="px-4 py-3 font-medium">Hours</th>
-              <th className="px-4 py-3 font-medium">Expenses</th>
-              <th className="px-4 py-3 font-medium">Closed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {report.clientSummaries.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
-                  No data for this period yet.
-                </td>
-              </tr>
-            ) : (
-              report.clientSummaries.map((row) => (
-                <tr key={row.clientId} className="border-t border-zinc-800">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/clients/${row.clientId}`}
-                      className="font-medium text-white hover:text-sky-400"
-                    >
-                      {row.clientName}
-                    </Link>
-                    {row.company ? (
-                      <p className="text-xs text-zinc-500">{row.company}</p>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3">{row.interactionCount}</td>
-                  <td className="px-4 py-3">
-                    {(row.totalMinutes / 60).toFixed(1)}
-                  </td>
-                  <td className="px-4 py-3">
-                    {formatMoney(row.totalExpenseCents)}
-                  </td>
-                  <td className="px-4 py-3">
-                    {formatMoney(row.closedRevenueCents)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+        <ReportsTable rows={report.clientSummaries} />
+      </Card>
     </div>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-      <p className="text-xs uppercase tracking-wide text-zinc-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
-function ViewTab({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
+export function ReportsClient(props: {
+  yearlyReport: PeriodReport;
+  quarterlyReport: PeriodReport;
+  year: number;
+  quarter: number;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-lg px-4 py-2 text-sm font-medium ${
-        active
-          ? "bg-zinc-800 text-white"
-          : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-      }`}
-    >
-      {label}
-    </button>
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading reports…</p>}>
+      <ReportsContent {...props} />
+    </Suspense>
   );
 }

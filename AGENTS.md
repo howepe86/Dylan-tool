@@ -33,7 +33,12 @@ For each client they track:
 |-------|------------|
 | Frontend | Next.js 14 (App Router) |
 | Language | TypeScript |
-| Styling | Tailwind CSS (FlowShift dark UI system) |
+| Styling | Tailwind CSS + shadcn/ui (light theme, indigo accent) |
+| Charts | Recharts |
+| Forms | react-hook-form + zod |
+| Tables | TanStack Table |
+| Client state | TanStack Query |
+| Dates | date-fns |
 | Auth | Supabase Auth |
 | Database | Supabase Postgres |
 | Storage | Supabase (`voice-memos` bucket) |
@@ -73,7 +78,8 @@ Rules in `.cursor/rules/` as `.mdc` files:
 | Rule | Scope |
 |------|-------|
 | `clientledger-core.mdc` | Always apply |
-| `react-components.mdc` | `components/**`, `app/**/*.tsx` |
+| `react-components.mdc` | *(removed — see `ui.mdc`)* |
+| `ui.mdc` | `components/**`, `app/**/*.tsx`, styling |
 | `database.mdc` | `lib/db/**`, `supabase/**`, `types/database.ts` |
 | `api-routes.mdc` | `app/api/**` |
 

@@ -1,30 +1,22 @@
-import type { InputHTMLAttributes } from "react";
+import * as React from "react";
 
-interface TextareaProps extends InputHTMLAttributes<HTMLTextAreaElement> {
-  label: string;
-  error?: string;
-}
+import { cn } from "@/lib/utils";
 
-export function Textarea({
-  label,
-  error,
-  id,
-  className = "",
-  ...props
-}: TextareaProps) {
-  const inputId = id ?? label.toLowerCase().replace(/\s+/g, "-");
-
+const Textarea = React.forwardRef<
+  HTMLTextAreaElement,
+  React.ComponentProps<"textarea">
+>(({ className, ...props }, ref) => {
   return (
-    <div className="space-y-2">
-      <label htmlFor={inputId} className="block text-sm font-medium text-zinc-300">
-        {label}
-      </label>
-      <textarea
-        id={inputId}
-        className={`min-h-[120px] w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 ${className}`}
-        {...props}
-      />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-    </div>
+    <textarea
+      className={cn(
+        "flex min-h-[120px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      ref={ref}
+      {...props}
+    />
   );
-}
+});
+Textarea.displayName = "Textarea";
+
+export { Textarea };

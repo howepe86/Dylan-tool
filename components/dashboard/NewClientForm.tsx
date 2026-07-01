@@ -1,39 +1,49 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+const schema = z.object({
+  name: z.string().min(1, "Client name is required"),
+  company: z.string().optional(),
+  email: z.string().email("Enter a valid email").optional().or(z.literal("")),
+  notes: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 export function NewClientForm() {
-  const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
-  const [email, setEmail] = useState("");
-  const [notes, setNotes] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: "", company: "", email: "", notes: "" },
+  });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setError(null);
-
+  async function onSubmit(values: FormValues) {
     const response = await fetch("/api/clients", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name,
-        company: company || undefined,
-        email: email || undefined,
-        notes: notes || undefined,
+        name: values.name,
+        company: values.company || undefined,
+        email: values.email || undefined,
+        notes: values.notes || undefined,
       }),
     });
 
     const json = await response.json();
     if (!response.ok) {
-      setError(json.error ?? "Failed to create client");
-      setLoading(false);
+      setError("root", { message: json.error ?? "Failed to create client" });
       return;
     }
 
@@ -41,32 +51,43 @@ export function NewClientForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
-      <Input
-        label="Client name"
-        required
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-      />
-      <Input
-        label="Company"
-        value={company}
-        onChange={(event) => setCompany(event.target.value)}
-      />
-      <Input
-        label="Email"
-        type="email"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-      />
-      <Textarea
-        label="Notes"
-        value={notes}
-        onChange={(event) => setNotes(event.target.value)}
-      />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Add client"}
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="name">Client name</Label>
+        <Input id="name" aria-describedby={errors.name ? "name-error" : undefined} {...register("name")} />
+        {errors.name ? (
+          <p id="name-error" className="text-sm text-rose-600">
+            {errors.name.message}
+          </p>
+        ) : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="company">Company</Label>
+        <Input id="company" {...register("company")} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          aria-describedby={errors.email ? "email-error" : undefined}
+          {...register("email")}
+        />
+        {errors.email ? (
+          <p id="email-error" className="text-sm text-rose-600">
+            {errors.email.message}
+          </p>
+        ) : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea id="notes" {...register("notes")} />
+      </div>
+      {errors.root ? (
+        <p className="text-sm text-rose-600">{errors.root.message}</p>
+      ) : null}
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Saving…" : "Add client"}
       </Button>
     </form>
   );

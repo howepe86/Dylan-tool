@@ -1,5 +1,5 @@
 import { MarketingPage } from "@/components/marketing/MarketingPage";
-import { MarketingCard } from "@/components/marketing/primitives";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function AuthPageShell({
   title,
@@ -12,11 +12,13 @@ export async function AuthPageShell({
 }) {
   return (
     <MarketingPage variant="auth">
-      <MarketingCard highlighted className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold text-white">{title}</h1>
-        <p className="mt-2 text-sm text-zinc-400">{description}</p>
-        <div className="mt-6">{children}</div>
-      </MarketingCard>
+      <Card className="w-full max-w-md shadow-sm">
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>{children}</CardContent>
+      </Card>
     </MarketingPage>
   );
 }

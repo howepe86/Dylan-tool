@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase-server";
+import { getAuthUser, getDataClient } from "@/lib/auth/session";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,6 +30,7 @@ export async function POST(request: Request) {
     const extension = file.name.split(".").pop() ?? "webm";
     const path = `${user.id}/${crypto.randomUUID()}.${extension}`;
 
+    const supabase = await getDataClient();
     const { error: uploadError } = await supabase.storage
       .from("voice-memos")
       .upload(path, file, { contentType: file.type, upsert: false });

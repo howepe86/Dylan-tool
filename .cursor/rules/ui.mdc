@@ -1,0 +1,71 @@
+---
+description: Client Expense & Revenue Tracker — UI, styling, and component conventions
+globs: "{components/**/*.tsx,app/**/*.tsx,app/globals.css,tailwind.config.ts}"
+alwaysApply: false
+---
+
+# Client Expense & Revenue Tracker (UI)
+
+## Project Context
+
+Dashboard for tracking client expenses and revenue across quarterly, yearly, and custom date ranges. Primary users: freelancers/agencies reviewing financial performance per client. UI should feel clean, trustworthy, and data-forward — like Stripe Dashboard or Linear, not a spreadsheet.
+
+## Tech Stack (use these; don't introduce alternatives without asking)
+
+- **Framework:** Next.js (App Router) + TypeScript
+- **Styling:** Tailwind CSS
+- **Components:** shadcn/ui (Radix primitives)
+- **Charts:** Recharts (revenue vs expense trends)
+- **Icons:** lucide-react
+- **Forms:** react-hook-form + zod
+- **Tables:** @tanstack/react-table
+- **State/data:** TanStack Query for server state; React state for local UI
+- **Dates:** date-fns (never moment.js)
+
+## Color System — Light Theme (default)
+
+- Base: `white` / `slate-50`
+- Surfaces: `white`, `border-slate-200`, `shadow-sm`
+- Text: `slate-900` primary, `slate-500` muted
+- Accent: `indigo-600` — buttons, active nav, key highlights (use sparingly)
+- Revenue / positive → `emerald-600` text, `emerald-50` bg tint
+- Expenses / negative → `rose-600` text, `rose-50` bg tint
+- Net / neutral → `slate-900`
+- Always pair color with `+`/`-` or icons — never color alone
+- No pure `#000` / `#FFF` pairs; use slate scale
+- **No dark mode in v1** unless explicitly requested
+
+## Layout
+
+- Sidebar nav + top bar with date-range / quarter selector
+- Dashboard: KPI cards → trend charts → detail tables
+- 8px spacing scale; cards: `rounded-xl border border-slate-200 bg-white p-6 shadow-sm`
+- Max width ~1280px (`max-w-7xl`), centered, generous whitespace
+
+## Data Display
+
+- Currency via `Intl.NumberFormat` — use `@/lib/format/currency`
+- KPI cards: compact notation (`$12.4K`); tables/tooltips: full precision
+- Quarter/year toggles: segmented control or tabs (not dropdown for ≤5 options)
+- Tables: sticky header, right-align numbers, subtle `even:bg-slate-50`
+- Charts: gridlines `slate-100`, tooltips white + `slate-200` border
+
+## Components
+
+- One component per file; route-specific components colocated with route
+- Extend shadcn via `className` + `cn()` — don't fork primitives
+- `focus-visible:` on all interactive elements
+- Loading: skeleton loaders matching layout — not spinners for cards/tables
+- Empty states: friendly message + CTA
+
+## Accessibility
+
+- WCAG AA contrast minimum
+- Charts: `aria-label` or text/table fallback
+- Forms: visible labels, `aria-describedby` on validation errors
+
+## General
+
+- Responsive to ~375px; optimize for desktop/tablet
+- Composition over prop-drilling; shared card/table/chart patterns in `components/`
+- Tailwind only + `cn()` — no inline styles

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { ReportsClient } from "@/components/dashboard/ReportsClient";
+import { getAuthUser } from "@/lib/auth/session";
 import {
   listClients,
   listDeals,
@@ -8,7 +9,6 @@ import {
   listInteractions,
 } from "@/lib/db/clients";
 import { buildPeriodReport } from "@/lib/reports";
-import { createClient } from "@/lib/supabase-server";
 
 export default async function ReportsPage({
   searchParams,
@@ -16,15 +16,13 @@ export default async function ReportsPage({
   searchParams: Promise<{ year?: string; quarter?: string; view?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getAuthUser();
   if (!user) return null;
 
   const year = Number(params.year ?? new Date().getFullYear());
-  const quarter = Number(params.quarter ?? Math.floor(new Date().getMonth() / 3) + 1);
+  const quarter = Number(
+    params.quarter ?? Math.floor(new Date().getMonth() / 3) + 1
+  );
 
   const [clients, interactions, expenses, deals] = await Promise.all([
     listClients(user.id),
@@ -50,7 +48,7 @@ export default async function ReportsPage({
   });
 
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-400">Loading reports...</p>}>
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading reports…</p>}>
       <ReportsClient
         yearlyReport={yearlyReport}
         quarterlyReport={quarterlyReport}

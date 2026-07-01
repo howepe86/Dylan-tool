@@ -2,10 +2,18 @@
 
 import { FormEvent, useState } from "react";
 
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
-import { Textarea } from "@/components/ui/Textarea";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { ACTIVITY_TYPES, EXPENSE_CATEGORIES } from "@/lib/reports";
 import type { Client } from "@/types/database";
 
@@ -31,7 +39,7 @@ export function ActivityLogForm({ clients }: { clients: Client[] }) {
 
   if (clients.length === 0) {
     return (
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-slate-500">
         Add a client first before logging activities.
       </p>
     );
@@ -109,137 +117,196 @@ export function ActivityLogForm({ clients }: { clients: Client[] }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Select
-        label="Client"
-        value={clientId}
-        onChange={(event) => setClientId(event.target.value)}
-        options={clients.map((client) => ({
-          value: client.id,
-          label: client.company
-            ? `${client.name} (${client.company})`
-            : client.name,
-        }))}
-      />
-      <Input
-        label="Activity title"
-        placeholder="Client lunch at Nobu"
-        required
-        value={title}
-        onChange={(event) => setTitle(event.target.value)}
-      />
-      <Select
-        label="Activity type"
-        value={activityType}
-        onChange={(event) => setActivityType(event.target.value)}
-        options={ACTIVITY_TYPES.map((item) => ({
-          value: item.id,
-          label: item.label,
-        }))}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="client">Client</Label>
+        <Select value={clientId} onValueChange={setClientId}>
+          <SelectTrigger id="client">
+            <SelectValue placeholder="Select client" />
+          </SelectTrigger>
+          <SelectContent>
+            {clients.map((client) => (
+              <SelectItem key={client.id} value={client.id}>
+                {client.company
+                  ? `${client.name} (${client.company})`
+                  : client.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="title">Activity title</Label>
+        <Input
+          id="title"
+          placeholder="Client lunch at Nobu"
+          required
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="activityType">Activity type</Label>
+        <Select value={activityType} onValueChange={setActivityType}>
+          <SelectTrigger id="activityType">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ACTIVITY_TYPES.map((item) => (
+              <SelectItem key={item.id} value={item.id}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input
-          label="When"
-          type="datetime-local"
-          required
-          value={occurredAt}
-          onChange={(event) => setOccurredAt(event.target.value)}
-        />
-        <Input
-          label="Duration (minutes)"
-          type="number"
-          min={0}
-          required
-          value={durationMinutes}
-          onChange={(event) => setDurationMinutes(event.target.value)}
-        />
-      </div>
-      <Textarea
-        label="Notes"
-        placeholder="Discussed Q3 expansion, follow up with proposal..."
-        value={notes}
-        onChange={(event) => setNotes(event.target.value)}
-      />
-
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-white">Expense (optional)</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="occurredAt">When</Label>
           <Input
-            label="Amount (USD)"
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="125.00"
-            value={expenseAmount}
-            onChange={(event) => setExpenseAmount(event.target.value)}
-          />
-          <Select
-            label="Category"
-            value={expenseCategory}
-            onChange={(event) => setExpenseCategory(event.target.value)}
-            options={EXPENSE_CATEGORIES.map((item) => ({
-              value: item,
-              label: item.charAt(0).toUpperCase() + item.slice(1),
-            }))}
+            id="occurredAt"
+            type="datetime-local"
+            required
+            value={occurredAt}
+            onChange={(event) => setOccurredAt(event.target.value)}
           />
         </div>
-        <Input
-          label="Expense description"
-          placeholder="Lunch for two"
-          value={expenseDescription}
-          onChange={(event) => setExpenseDescription(event.target.value)}
-        />
-      </div>
-
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-white">Deal / revenue (optional)</h3>
-        <Input
-          label="Deal title"
-          placeholder="Annual services contract"
-          value={dealTitle}
-          onChange={(event) => setDealTitle(event.target.value)}
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="duration">Duration (minutes)</Label>
           <Input
-            label="Amount (USD)"
+            id="duration"
             type="number"
             min={0}
-            step="0.01"
-            placeholder="50000"
-            value={dealAmount}
-            onChange={(event) => setDealAmount(event.target.value)}
-          />
-          <Select
-            label="Status"
-            value={dealStatus}
-            onChange={(event) => setDealStatus(event.target.value)}
-            options={[
-              { value: "pipeline", label: "Pipeline" },
-              { value: "closed", label: "Closed" },
-              { value: "lost", label: "Lost" },
-            ]}
+            required
+            value={durationMinutes}
+            onChange={(event) => setDurationMinutes(event.target.value)}
           />
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-white">Voice memo (optional)</h3>
-        <p className="text-xs text-zinc-500">
-          Record a quick recap on your phone and upload the audio file. Transcription
-          comes in a later phase.
-        </p>
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={(event) => setVoiceFile(event.target.files?.[0] ?? null)}
-          className="block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-4 file:py-2 file:text-sm file:text-zinc-200"
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          placeholder="Discussed Q3 expansion, follow up with proposal..."
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
         />
       </div>
 
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      {message ? <p className="text-sm text-emerald-400">{message}</p> : null}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Expense (optional)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="expenseAmount">Amount (USD)</Label>
+              <Input
+                id="expenseAmount"
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="125.00"
+                value={expenseAmount}
+                onChange={(event) => setExpenseAmount(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="expenseCategory">Category</Label>
+              <Select value={expenseCategory} onValueChange={setExpenseCategory}>
+                <SelectTrigger id="expenseCategory">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EXPENSE_CATEGORIES.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="expenseDescription">Description</Label>
+            <Input
+              id="expenseDescription"
+              placeholder="Lunch for two"
+              value={expenseDescription}
+              onChange={(event) => setExpenseDescription(event.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Deal / revenue (optional)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="dealTitle">Deal title</Label>
+            <Input
+              id="dealTitle"
+              placeholder="Annual services contract"
+              value={dealTitle}
+              onChange={(event) => setDealTitle(event.target.value)}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="dealAmount">Amount (USD)</Label>
+              <Input
+                id="dealAmount"
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="50000"
+                value={dealAmount}
+                onChange={(event) => setDealAmount(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dealStatus">Status</Label>
+              <Select value={dealStatus} onValueChange={setDealStatus}>
+                <SelectTrigger id="dealStatus">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pipeline">Pipeline</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                  <SelectItem value="lost">Lost</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Voice memo (optional)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-slate-500">
+            Upload an audio recap from your phone. Transcription comes in phase 2.
+          </p>
+          <Input
+            type="file"
+            accept="audio/*"
+            onChange={(event) => setVoiceFile(event.target.files?.[0] ?? null)}
+          />
+        </CardContent>
+      </Card>
+
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Save activity"}
+        {loading ? "Saving…" : "Save activity"}
       </Button>
     </form>
   );

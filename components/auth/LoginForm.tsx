@@ -2,72 +2,83 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { authButtonClass, authLinkClass } from "@/components/auth/auth-styles";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { PasswordInput } from "@/components/ui/PasswordInput";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase";
+
+type LoginValues = { email: string; password: string };
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(
-    searchParams.get("error") === "auth_callback_failed"
-      ? "Authentication failed. Please try again."
-      : null
-  );
-  const [loading, setLoading] = useState(false);
+  const devBypass = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+    setError,
+  } = useForm<LoginValues>({
+    defaultValues: { email: "", password: "" },
+  });
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
+  async function onSubmit(values: LoginValues) {
+    if (devBypass) {
+      await fetch("/api/auth/dev-login", { method: "POST" });
+      router.push(searchParams.get("next") ?? "/dashboard");
+      router.refresh();
       return;
     }
 
-    const next = searchParams.get("next") ?? "/dashboard";
-    router.push(next);
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword(values);
+
+    if (authError) {
+      setError("root", { message: authError.message });
+      return;
+    }
+
+    router.push(searchParams.get("next") ?? "/dashboard");
     router.refresh();
   }
 
+  const callbackError =
+    searchParams.get("error") === "auth_callback_failed"
+      ? "Authentication failed. Please try again."
+      : null;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Email"
-        type="email"
-        autoComplete="email"
-        required
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-      />
-      <PasswordInput
-        label="Password"
-        autoComplete="current-password"
-        required
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-      />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      <Button type="submit" fullWidth disabled={loading} className={authButtonClass}>
-        {loading ? "Signing in..." : "Log in"}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {devBypass ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Dev mode: click Log in to skip authentication.
+        </p>
+      ) : null}
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" type="email" autoComplete="email" {...register("email")} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          {...register("password")}
+        />
+      </div>
+      {callbackError ? (
+        <p className="text-sm text-rose-600">{callbackError}</p>
+      ) : null}
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? "Signing in…" : "Log in"}
       </Button>
-      <p className="text-center text-sm text-zinc-400">
+      <p className="text-center text-sm text-slate-500">
         No account?{" "}
-        <Link href="/signup" className={authLinkClass}>
+        <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
           Sign up
         </Link>
       </p>

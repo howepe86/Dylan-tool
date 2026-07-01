@@ -1,3 +1,6 @@
+import { eachMonthOfInterval, format, getQuarter, parseISO } from "date-fns";
+
+import { formatCurrency } from "@/lib/format/currency";
 import type {
   ActivityType,
   ClientSummary,
@@ -7,29 +10,18 @@ import type {
   PeriodReport,
 } from "@/types/database";
 
-function getQuarter(date: Date) {
-  return Math.floor(date.getMonth() / 3) + 1;
-}
+export { formatCurrency as formatMoney };
 
 function inPeriod(
   isoDate: string,
   year: number,
   quarter?: number
 ): boolean {
-  const date = new Date(isoDate);
+  const date = parseISO(isoDate);
   if (date.getFullYear() !== year) return false;
   if (quarter === undefined) return true;
   return getQuarter(date) === quarter;
 }
-
-function formatMoney(cents: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(cents / 100);
-}
-
-export { formatMoney };
 
 export function buildPeriodReport({
   year,
@@ -139,6 +131,50 @@ export function buildPeriodReport({
         item.closedRevenueCents > 0
     ),
   };
+}
+
+export function buildMonthlyTrend({
+  year,
+  quarter,
+  expenses,
+  deals,
+}: {
+  year: number;
+  quarter?: number;
+  expenses: Expense[];
+  deals: Deal[];
+}) {
+  const startMonth = quarter ? (quarter - 1) * 3 : 0;
+  const endMonth = quarter ? startMonth + 2 : 11;
+  const start = new Date(year, startMonth, 1);
+  const end = new Date(year, endMonth + 1, 0);
+
+  const months = eachMonthOfInterval({ start, end });
+
+  return months.map((month) => {
+    const label = format(month, "MMM");
+    const monthExpenses = expenses.filter((item) => {
+      const date = parseISO(item.incurred_at);
+      return (
+        date.getFullYear() === month.getFullYear() &&
+        date.getMonth() === month.getMonth()
+      );
+    });
+    const monthRevenue = deals.filter((deal) => {
+      if (deal.status !== "closed" || !deal.closed_at) return false;
+      const date = parseISO(deal.closed_at);
+      return (
+        date.getFullYear() === month.getFullYear() &&
+        date.getMonth() === month.getMonth()
+      );
+    });
+
+    return {
+      label,
+      revenue: monthRevenue.reduce((sum, d) => sum + d.amount_cents, 0),
+      expenses: monthExpenses.reduce((sum, e) => sum + e.amount_cents, 0),
+    };
+  });
 }
 
 export const ACTIVITY_TYPES: { id: ActivityType; label: string }[] = [

@@ -1,21 +1,33 @@
 import Link from "next/link";
+import { Activity, Clock, DollarSign, TrendingUp, Users } from "lucide-react";
 
-import { Badge } from "@/components/ui/Badge";
+import { RevenueExpenseChart } from "@/components/charts/revenue-expense-chart";
+import { EmptyState } from "@/components/dashboard/empty-state";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { getAuthUser } from "@/lib/auth/session";
 import {
   listClients,
   listDeals,
   listExpenses,
   listInteractions,
 } from "@/lib/db/clients";
-import { buildPeriodReport, formatMoney } from "@/lib/reports";
-import { createClient } from "@/lib/supabase-server";
+import { formatCurrency } from "@/lib/format/currency";
+import { buildMonthlyTrend, buildPeriodReport } from "@/lib/reports";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getAuthUser();
   if (!user) return null;
 
   const year = new Date().getFullYear();
@@ -37,82 +49,120 @@ export default async function DashboardPage() {
     deals,
   });
 
+  const chartData = buildMonthlyTrend({
+    year,
+    quarter,
+    expenses,
+    deals,
+  });
+
+  const netCents =
+    quarterly.closedRevenueCents - quarterly.totalExpenseCents;
   const recent = interactions.slice(0, 5);
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Overview</h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            Current quarter: {quarterly.periodLabel}
-          </p>
-        </div>
-        <Link
-          href="/log"
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500"
-        >
-          Log activity
-        </Link>
+      <PageHeader
+        title="Dashboard"
+        description={`Financial overview for ${quarterly.periodLabel}`}
+        actions={
+          <Button asChild>
+            <Link href="/log">Log activity</Link>
+          </Button>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Total revenue"
+          value={formatCurrency(quarterly.closedRevenueCents, { compact: true })}
+          hint="Closed deals this quarter"
+          icon={TrendingUp}
+          tone="revenue"
+        />
+        <KpiCard
+          label="Total expenses"
+          value={formatCurrency(quarterly.totalExpenseCents, { compact: true })}
+          hint="Client entertainment & travel"
+          icon={DollarSign}
+          tone="expense"
+        />
+        <KpiCard
+          label="Net"
+          value={`${netCents >= 0 ? "+" : ""}${formatCurrency(netCents, { compact: true })}`}
+          hint="Revenue minus expenses"
+          icon={Activity}
+          tone="neutral"
+        />
+        <KpiCard
+          label="Clients"
+          value={String(clients.length)}
+          hint={`${Math.round(quarterly.totalMinutes / 60)}h invested`}
+          icon={Users}
+        />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Clients" value={String(clients.length)} />
-        <Metric
-          label="Q time"
-          value={`${Math.round(quarterly.totalMinutes / 60)}h`}
-        />
-        <Metric label="Q expenses" value={formatMoney(quarterly.totalExpenseCents)} />
-        <Metric
-          label="Q closed revenue"
-          value={formatMoney(quarterly.closedRevenueCents)}
-        />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue vs. expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RevenueExpenseChart data={chartData} />
+        </CardContent>
+      </Card>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Recent activity</h2>
-          <Link href="/reports" className="text-sm text-sky-400 hover:text-sky-300">
+          <h2 className="text-lg font-semibold text-slate-900">Recent activity</h2>
+          <Link
+            href="/reports"
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+          >
             View reports
           </Link>
         </div>
         {recent.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-500">
-            No activities yet.{" "}
-            <Link href="/log" className="text-sky-400 hover:text-sky-300">
-              Log your first client touchpoint
-            </Link>
-            .
-          </div>
+          <EmptyState
+            title="No activities yet"
+            description="Log lunches, meetings, and outings to start tracking client ROI."
+            actionLabel="Log activity"
+            actionHref="/log"
+            icon={Clock}
+          />
         ) : (
-          <ul className="divide-y divide-zinc-800 rounded-xl border border-zinc-800">
-            {recent.map((item) => {
-              const client = clients.find((c) => c.id === item.client_id);
-              return (
-                <li key={item.id} className="flex items-center justify-between px-4 py-3">
-                  <div>
-                    <p className="font-medium text-white">{item.title}</p>
-                    <p className="text-xs text-zinc-500">
-                      {client?.name ?? "Unknown client"} ·{" "}
-                      {new Date(item.occurred_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Badge tone="info">{item.activity_type}</Badge>
-                </li>
-              );
-            })}
-          </ul>
+          <Card className="overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Activity</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Type</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recent.map((item) => {
+                  const client = clients.find((c) => c.id === item.client_id);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium text-slate-900">
+                        {item.title}
+                      </TableCell>
+                      <TableCell>{client?.name ?? "Unknown"}</TableCell>
+                      <TableCell className="text-slate-500">
+                        {new Date(item.occurred_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{item.activity_type}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
         )}
       </section>
-    </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-      <p className="text-xs uppercase tracking-wide text-zinc-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
     </div>
   );
 }
