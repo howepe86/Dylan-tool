@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowDownRight, ArrowUpRight, Download, Minus } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Download, Minus, Printer } from "lucide-react";
 
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -148,12 +148,12 @@ function ReportsContent({
   const netCents = report.closedRevenueCents - report.totalExpenseCents;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" id="report-print-area">
       <PageHeader
         title="Reports"
         description="Compare client investment vs. revenue closed."
         actions={
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 print:hidden">
             <PeriodSelector year={year} quarter={quarter} />
             <Button variant="outline" size="sm" asChild>
               <a
@@ -162,6 +162,15 @@ function ReportsContent({
                 <Download className="mr-2 h-4 w-4" aria-hidden />
                 Export CSV
               </a>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => window.print()}
+            >
+              <Printer className="mr-2 h-4 w-4" aria-hidden />
+              Print
             </Button>
           </div>
         }

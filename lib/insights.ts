@@ -130,12 +130,27 @@ export function buildClientHealthScores(
     interactions,
     expenses,
     deals,
+    includeEmptyClients: true,
   });
 
-  return report.clientSummaries
-    .map((summary) => {
+  const summaryMap = new Map(
+    report.clientSummaries.map((s) => [s.clientId, s])
+  );
+
+  return clients
+    .map((client) => {
+      const summary = summaryMap.get(client.id) ?? {
+        clientId: client.id,
+        clientName: client.name,
+        company: client.company,
+        interactionCount: 0,
+        totalMinutes: 0,
+        totalExpenseCents: 0,
+        closedRevenueCents: 0,
+        pipelineRevenueCents: 0,
+      };
       const lastInteraction = interactions
-        .filter((i) => i.client_id === summary.clientId)
+        .filter((i) => i.client_id === client.id)
         .sort(
           (a, b) =>
             parseISO(b.occurred_at).getTime() - parseISO(a.occurred_at).getTime()
@@ -268,4 +283,60 @@ export function groupInteractionsByDate(
     acc[key].push(item);
     return acc;
   }, {});
+}
+
+export interface DealStats {
+  closedCount: number;
+  pipelineCount: number;
+  lostCount: number;
+  closedValueCents: number;
+  pipelineValueCents: number;
+  lostValueCents: number;
+  winRate: number | null;
+}
+
+export function buildDealStats(deals: Deal[]): DealStats {
+  const closed = deals.filter((d) => d.status === "closed");
+  const pipeline = deals.filter((d) => d.status === "pipeline");
+  const lost = deals.filter((d) => d.status === "lost");
+  const decided = closed.length + lost.length;
+  return {
+    closedCount: closed.length,
+    pipelineCount: pipeline.length,
+    lostCount: lost.length,
+    closedValueCents: closed.reduce((s, d) => s + d.amount_cents, 0),
+    pipelineValueCents: pipeline.reduce((s, d) => s + d.amount_cents, 0),
+    lostValueCents: lost.reduce((s, d) => s + d.amount_cents, 0),
+    winRate: decided > 0 ? Math.round((closed.length / decided) * 100) : null,
+  };
+}
+
+export interface HeatmapDay {
+  date: string;
+  count: number;
+  level: 0 | 1 | 2 | 3 | 4;
+}
+
+export function buildActivityHeatmap(
+  interactions: Interaction[],
+  days = 91
+): HeatmapDay[] {
+  const now = new Date();
+  const counts = new Map<string, number>();
+  for (const item of interactions) {
+    const key = parseISO(item.occurred_at).toISOString().slice(0, 10);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const result: HeatmapDay[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const count = counts.get(key) ?? 0;
+    const level: HeatmapDay["level"] =
+      count === 0 ? 0 : count === 1 ? 1 : count === 2 ? 2 : count <= 4 ? 3 : 4;
+    result.push({ date: key, count, level });
+  }
+  return result;
 }

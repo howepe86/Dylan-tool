@@ -26,7 +26,7 @@ export async function POST() {
       demoUser = data.user;
     }
 
-    await seedDemoUserData(demoUser.id);
+    await seedDemoUserData(demoUser.id, { force: true });
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: DEMO_EMAIL,

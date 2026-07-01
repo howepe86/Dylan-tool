@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Trophy } from "lucide-react";
+import { AlertTriangle, ArrowRight, Briefcase, Trophy } from "lucide-react";
 
 import { ActivityBreakdownChart } from "@/components/charts/activity-breakdown-chart";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { formatCurrency } from "@/lib/format/currency";
 import {
   buildActivityBreakdown,
   buildClientHealthScores,
+  buildDealStats,
   findStaleClients,
   type HealthTier,
 } from "@/lib/insights";
@@ -52,13 +54,52 @@ export default async function InsightsPage() {
   );
   const staleClients = findStaleClients(clients, interactions);
   const activityBreakdown = buildActivityBreakdown(interactions, year, quarter);
+  const dealStats = buildDealStats(deals);
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Insights"
         description={`Relationship intelligence for Q${quarter} ${year}`}
+        actions={
+          <Link
+            href="/compare"
+            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Compare clients
+          </Link>
+        }
       />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Win rate"
+          value={dealStats.winRate !== null ? `${dealStats.winRate}%` : "—"}
+          hint={`${dealStats.closedCount} closed · ${dealStats.lostCount} lost`}
+          icon={Briefcase}
+          tone="revenue"
+        />
+        <KpiCard
+          label="Pipeline value"
+          value={formatCurrency(dealStats.pipelineValueCents, { compact: true })}
+          hint={`${dealStats.pipelineCount} open deals`}
+          icon={Briefcase}
+        />
+        <KpiCard
+          label="Closed (all time)"
+          value={formatCurrency(dealStats.closedValueCents, { compact: true })}
+          hint={`${dealStats.closedCount} deals won`}
+          icon={Trophy}
+          tone="revenue"
+        />
+        <KpiCard
+          label="At-risk clients"
+          value={String(staleClients.length)}
+          hint="No contact in 30+ days"
+          icon={AlertTriangle}
+          tone={staleClients.length > 0 ? "expense" : "neutral"}
+        />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -68,14 +109,14 @@ export default async function InsightsPage() {
               Client health leaderboard
             </CardTitle>
             <Link href="/compare" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-              Compare clients
+              Compare →
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
             {healthScores.length === 0 ? (
               <p className="text-sm text-slate-500">No client data yet.</p>
             ) : (
-              healthScores.map((client, i) => (
+              healthScores.slice(0, 8).map((client, i) => (
                 <Link
                   key={client.clientId}
                   href={`/clients/${client.clientId}`}
@@ -91,7 +132,7 @@ export default async function InsightsPage() {
                       {formatCurrency(client.closedRevenueCents, { compact: true })} closed
                     </p>
                   </div>
-                  <Badge className={cn("border shrink-0", tierStyles[client.tier])}>
+                  <Badge className={cn("shrink-0 border", tierStyles[client.tier])}>
                     {client.score}
                   </Badge>
                 </Link>

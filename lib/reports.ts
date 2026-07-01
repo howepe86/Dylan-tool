@@ -30,6 +30,7 @@ export function buildPeriodReport({
   interactions,
   expenses,
   deals,
+  includeEmptyClients = false,
 }: {
   year: number;
   quarter?: number;
@@ -37,6 +38,7 @@ export function buildPeriodReport({
   interactions: Interaction[];
   expenses: Expense[];
   deals: Deal[];
+  includeEmptyClients?: boolean;
 }): PeriodReport {
   const periodInteractions = interactions.filter((item) =>
     inPeriod(item.occurred_at, year, quarter)
@@ -124,12 +126,15 @@ export function buildPeriodReport({
     closedRevenueCents,
     pipelineRevenueCents,
     roiPercent,
-    clientSummaries: clientSummaries.filter(
-      (item) =>
-        item.interactionCount > 0 ||
-        item.totalExpenseCents > 0 ||
-        item.closedRevenueCents > 0
-    ),
+    clientSummaries: includeEmptyClients
+    ? clientSummaries
+    : clientSummaries.filter(
+        (item) =>
+          item.interactionCount > 0 ||
+          item.totalExpenseCents > 0 ||
+          item.closedRevenueCents > 0 ||
+          item.pipelineRevenueCents > 0
+      ),
   };
 }
 

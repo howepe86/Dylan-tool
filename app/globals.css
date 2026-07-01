@@ -106,3 +106,19 @@
     opacity: 0.7;
   }
 }
+
+@media print {
+  aside,
+  header,
+  [data-quick-fab] {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  #report-print-area {
+    padding: 0;
+  }
+}

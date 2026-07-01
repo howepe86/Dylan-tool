@@ -1,4 +1,4 @@
-import { ComparePageClient } from "@/components/dashboard/CompareClients";
+import { ClientCompareClient } from "@/components/dashboard/ClientCompare";
 import { getAuthUser } from "@/lib/auth/session";
 import {
   listClients,
@@ -29,16 +29,13 @@ export default async function ComparePage() {
     interactions,
     expenses,
     deals,
+    includeEmptyClients: true,
   });
 
   return (
-    <ComparePageClient
-      clients={clients.map((c) => ({
-        id: c.id,
-        name: c.name,
-        company: c.company,
-      }))}
+    <ClientCompareClient
       summaries={report.clientSummaries}
+      periodLabel={report.periodLabel}
     />
   );
 }

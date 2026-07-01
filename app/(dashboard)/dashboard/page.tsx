@@ -11,9 +11,12 @@ import {
 } from "lucide-react";
 
 import { RevenueExpenseChart } from "@/components/charts/revenue-expense-chart";
+import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { RecentExpenses } from "@/components/dashboard/RecentExpenses";
+import { WeeklyGoal } from "@/components/dashboard/WeeklyGoal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,11 +37,13 @@ import {
 } from "@/lib/db/clients";
 import { formatCurrency } from "@/lib/format/currency";
 import {
+  buildActivityHeatmap,
   buildClientHealthScores,
   computePeriodDelta,
   findStaleClients,
 } from "@/lib/insights";
 import { buildMonthlyTrend, buildPeriodReport } from "@/lib/reports";
+import { startOfWeek, parseISO, isAfter } from "date-fns";
 
 export default async function DashboardPage() {
   const user = await getAuthUser();
@@ -86,6 +91,11 @@ export default async function DashboardPage() {
   const staleClients = findStaleClients(clients, interactions).slice(0, 3);
 
   const chartData = buildMonthlyTrend({ year, quarter, expenses, deals });
+  const heatmapData = buildActivityHeatmap(interactions);
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weeklyCount = interactions.filter((i) =>
+    isAfter(parseISO(i.occurred_at), weekStart)
+  ).length;
   const netCents = quarterly.closedRevenueCents - quarterly.totalExpenseCents;
   const recent = interactions.slice(0, 5);
   const topClient = healthScores[0];
@@ -153,6 +163,10 @@ export default async function DashboardPage() {
         />
       </div>
 
+      <Card className="p-6">
+        <ActivityHeatmap data={heatmapData} />
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -164,6 +178,7 @@ export default async function DashboardPage() {
         </Card>
 
         <div className="space-y-6">
+          <WeeklyGoal count={weeklyCount} />
           {topClient ? (
             <Card className="border-indigo-100 bg-gradient-to-br from-indigo-50/50 to-white">
               <CardHeader className="pb-2">
@@ -228,6 +243,7 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
           ) : null}
+          <RecentExpenses expenses={expenses} clients={clients} />
         </div>
       </div>
 
