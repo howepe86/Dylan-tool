@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-
 import { Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { createClient } from "@/lib/supabase";
 
 type LoginValues = { email: string; password: string };
@@ -31,6 +32,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const devBypass = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const {
     register,
@@ -42,14 +44,19 @@ export function LoginForm() {
   });
 
   async function demoLogin() {
-    const res = await fetch("/api/auth/demo-login", { method: "POST" });
-    const json = await res.json();
-    if (!res.ok) {
-      setError("root", { message: json.error ?? "Demo login failed" });
-      return;
+    setDemoLoading(true);
+    try {
+      const res = await fetch("/api/auth/demo-login", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) {
+        setError("root", { message: json.error ?? "Demo login failed" });
+        return;
+      }
+      router.push(safeNextPath(searchParams.get("next")));
+      router.refresh();
+    } finally {
+      setDemoLoading(false);
     }
-    router.push(safeNextPath(searchParams.get("next")));
-    router.refresh();
   }
 
   async function onSubmit(values: LoginValues) {
@@ -77,6 +84,8 @@ export function LoginForm() {
       ? "Authentication failed. Please try again."
       : null;
 
+  const busy = demoLoading || isSubmitting;
+
   return (
     <div className="space-y-4">
       {callbackError ? (
@@ -89,9 +98,16 @@ export function LoginForm() {
         type="button"
         className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 shadow-md shadow-indigo-200 hover:from-indigo-500 hover:to-violet-500"
         onClick={demoLogin}
+        disabled={busy}
       >
-        <Sparkles className="mr-2 h-4 w-4" aria-hidden />
-        Continue as Demo User
+        {demoLoading ? (
+          <LoadingSpinner label="Setting up demo…" />
+        ) : (
+          <>
+            <Sparkles className="h-4 w-4" aria-hidden />
+            Continue as Demo User
+          </>
+        )}
       </Button>
       <p className="text-center text-xs text-slate-500">
         Pre-loaded with clients, activities &amp; deals — no setup needed
@@ -125,11 +141,12 @@ export function LoginForm() {
             {...register("password")}
           />
         </div>
-        {callbackError ? (
-          <p className="text-sm text-rose-600">{callbackError}</p>
-        ) : null}
-        <Button type="submit" variant="outline" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Signing in…" : "Log in with email"}
+        <Button type="submit" variant="outline" className="w-full" disabled={busy}>
+          {isSubmitting ? (
+            <LoadingSpinner label="Signing in…" />
+          ) : (
+            "Log in with email"
+          )}
         </Button>
         <p className="text-center text-sm text-slate-500">
           No account?{" "}

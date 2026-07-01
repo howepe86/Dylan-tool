@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,7 @@ export function ExpensesList({
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [clientId, setClientId] = useState(clients[0]?.id ?? "");
   const [category, setCategory] = useState<string>("meals");
@@ -47,8 +49,13 @@ export function ExpensesList({
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this expense?")) return;
-    await fetch(`/api/expenses/${id}`, { method: "DELETE" });
-    router.refresh();
+    setDeletingId(id);
+    try {
+      await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      router.refresh();
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -147,7 +154,7 @@ export function ExpensesList({
             {error ? <p className="text-sm text-rose-600">{error}</p> : null}
             <div className="flex gap-2">
               <Button type="submit" disabled={saving}>
-                {saving ? "Saving…" : "Save expense"}
+                {saving ? <LoadingSpinner label="Saving…" /> : "Save expense"}
               </Button>
               <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
                 Cancel
@@ -201,9 +208,14 @@ export function ExpensesList({
                         variant="ghost"
                         size="sm"
                         className="text-slate-400 hover:text-rose-600"
+                        disabled={deletingId === expense.id}
                         onClick={() => handleDelete(expense.id)}
                       >
-                        Delete
+                        {deletingId === expense.id ? (
+                          <LoadingSpinner />
+                        ) : (
+                          "Delete"
+                        )}
                       </Button>
                     </TableCell>
                   </TableRow>

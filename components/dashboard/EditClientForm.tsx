@@ -2,12 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import type { Client } from "@/types/database";
 
@@ -22,6 +24,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function EditClientForm({ client }: { client: Client }) {
   const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
   const {
     register,
     handleSubmit,
@@ -61,12 +64,19 @@ export function EditClientForm({ client }: { client: Client }) {
 
   async function handleDelete() {
     if (!confirm("Delete this client and all related data?")) return;
-    const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
-    if (res.ok) {
-      router.push("/clients");
-      router.refresh();
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
+      if (res.ok) {
+        router.push("/clients");
+        router.refresh();
+      }
+    } finally {
+      setIsDeleting(false);
     }
   }
+
+  const busy = isSubmitting || isDeleting;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg space-y-5">
@@ -96,19 +106,20 @@ export function EditClientForm({ client }: { client: Client }) {
         <p className="text-sm text-rose-600">{errors.root.message}</p>
       ) : null}
       <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving…" : "Save changes"}
+        <Button type="submit" disabled={busy}>
+          {isSubmitting ? <LoadingSpinner label="Saving…" /> : "Save changes"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={busy}>
           Cancel
         </Button>
         <Button
           type="button"
           variant="ghost"
           className="text-rose-600 hover:text-rose-700"
+          disabled={busy}
           onClick={handleDelete}
         >
-          Delete client
+          {isDeleting ? <LoadingSpinner label="Deleting…" /> : "Delete client"}
         </Button>
       </div>
     </form>

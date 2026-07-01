@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -306,7 +307,7 @@ export function ActivityLogForm({ clients }: { clients: Client[] }) {
       {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving…" : "Save activity"}
+        {loading ? <LoadingSpinner label="Saving…" /> : "Save activity"}
       </Button>
     </form>
   );

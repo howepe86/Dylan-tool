@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Textarea } from "@/components/ui/textarea";
 
 const schema = z.object({
@@ -87,7 +88,7 @@ export function NewClientForm() {
         <p className="text-sm text-rose-600">{errors.root.message}</p>
       ) : null}
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Saving…" : "Add client"}
+        {isSubmitting ? <LoadingSpinner label="Saving…" /> : "Add client"}
       </Button>
     </form>
   );

@@ -21,16 +21,16 @@ export async function seedDemoUserData(
 ) {
   const admin = createAdminClient();
 
-  const { count } = await admin
-    .from("clients")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
+  if (!options?.force) {
+    const { count } = await admin
+      .from("clients")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
 
-  if (count && count > 0 && !options?.force) return false;
-
-  if (count && count > 0) {
-    await clearUserData(userId);
+    if (count && count > 0) return false;
   }
+
+  await clearUserData(userId);
 
   const clients = [
     {

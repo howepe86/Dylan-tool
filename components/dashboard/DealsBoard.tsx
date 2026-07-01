@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -45,6 +46,7 @@ export function DealsBoard({
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [updatingDealId, setUpdatingDealId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [clientId, setClientId] = useState(clients[0]?.id ?? "");
   const [status, setStatus] = useState<Deal["status"]>("pipeline");
@@ -57,21 +59,26 @@ export function DealsBoard({
   const closedTotal = closed.reduce((s, d) => s + d.amount_cents, 0);
 
   async function updateStatus(dealId: string, status: Deal["status"]) {
-    const res = await fetch(`/api/deals/${dealId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status,
-        closedAt: status === "closed" ? new Date().toISOString() : null,
-      }),
-    });
-    if (!res.ok) {
-      const json = await res.json();
-      setError(json.error ?? "Failed to update deal");
-      return;
+    setUpdatingDealId(dealId);
+    try {
+      const res = await fetch(`/api/deals/${dealId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status,
+          closedAt: status === "closed" ? new Date().toISOString() : null,
+        }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setError(json.error ?? "Failed to update deal");
+        return;
+      }
+      setError(null);
+      router.refresh();
+    } finally {
+      setUpdatingDealId(null);
     }
-    setError(null);
-    router.refresh();
   }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -103,6 +110,7 @@ export function DealsBoard({
 
   function DealCard({ deal }: { deal: Deal }) {
     const client = clients.find((c) => c.id === deal.client_id);
+    const isUpdating = updatingDealId === deal.id;
     return (
       <Card>
         <CardContent className="space-y-3 p-4">
@@ -123,17 +131,19 @@ export function DealsBoard({
               <Button
                 size="sm"
                 variant="outline"
+                disabled={isUpdating}
                 onClick={() => updateStatus(deal.id, "closed")}
               >
-                Mark closed
+                {isUpdating ? <LoadingSpinner /> : "Mark closed"}
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
                 className="text-rose-600"
+                disabled={isUpdating}
                 onClick={() => updateStatus(deal.id, "lost")}
               >
-                Lost
+                {isUpdating ? <LoadingSpinner /> : "Lost"}
               </Button>
             </div>
           ) : null}
@@ -219,7 +229,7 @@ export function DealsBoard({
               {error ? <p className="text-sm text-rose-600">{error}</p> : null}
               <div className="flex gap-2">
                 <Button type="submit" disabled={saving}>
-                  {saving ? "Saving…" : "Create deal"}
+                  {saving ? <LoadingSpinner label="Saving…" /> : "Create deal"}
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
                   Cancel
