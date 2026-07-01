@@ -104,6 +104,17 @@ export function SignupForm() {
           {...register("password")}
         />
       </div>
+      <p className="text-center text-xs text-slate-500">
+        By creating an account, you agree to our{" "}
+        <Link href="/terms" className="text-indigo-600 hover:text-indigo-500">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="text-indigo-600 hover:text-indigo-500">
+          Privacy Policy
+        </Link>
+        .
+      </p>
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Creating account…" : "Create account"}
       </Button>

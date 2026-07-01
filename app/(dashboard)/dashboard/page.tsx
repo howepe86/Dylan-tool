@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 import { RevenueExpenseChart } from "@/components/charts/revenue-expense-chart";
-import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -37,7 +36,6 @@ import {
 } from "@/lib/db/clients";
 import { formatCurrency } from "@/lib/format/currency";
 import {
-  buildActivityHeatmap,
   buildClientHealthScores,
   computePeriodDelta,
   findStaleClients,
@@ -91,7 +89,6 @@ export default async function DashboardPage() {
   const staleClients = findStaleClients(clients, interactions).slice(0, 3);
 
   const chartData = buildMonthlyTrend({ year, quarter, expenses, deals });
-  const heatmapData = buildActivityHeatmap(interactions);
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weeklyCount = interactions.filter((i) =>
     isAfter(parseISO(i.occurred_at), weekStart)
@@ -163,14 +160,15 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <Card className="p-6">
-        <ActivityHeatmap data={heatmapData} />
-      </Card>
-
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-base">Revenue vs. expenses</CardTitle>
+            <p className="text-sm text-slate-500">
+              {formatCurrency(quarterly.closedRevenueCents, { compact: true })} closed ·{" "}
+              {formatCurrency(quarterly.totalExpenseCents, { compact: true })} spent ·{" "}
+              {quarterly.periodLabel}
+            </p>
           </CardHeader>
           <CardContent>
             <RevenueExpenseChart data={chartData} />

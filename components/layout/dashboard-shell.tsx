@@ -35,7 +35,7 @@ export function DashboardShell({
           onSearchClick={() => setOpen(true)}
           periodLabel={periodLabel}
         />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto" id="main-content">
           <div className="mx-auto max-w-content px-4 py-6 lg:px-8 lg:py-8">
             {children}
           </div>

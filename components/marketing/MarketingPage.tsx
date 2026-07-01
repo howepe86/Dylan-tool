@@ -18,6 +18,7 @@ export async function MarketingPage({
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
       <SiteHeader />
       <main
+        id="main-content"
         className={
           isAuth
             ? "gradient-mesh relative flex flex-1 items-center justify-center px-6 py-12"
