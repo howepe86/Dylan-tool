@@ -9,11 +9,12 @@ import {
 import Link from "next/link";
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Download, Minus } from "lucide-react";
 
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { PeriodSelector } from "@/components/layout/period-selector";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -151,10 +152,22 @@ function ReportsContent({
       <PageHeader
         title="Reports"
         description="Compare client investment vs. revenue closed."
-        actions={<PeriodSelector year={year} quarter={quarter} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <PeriodSelector year={year} quarter={quarter} />
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={`/api/reports/export?year=${year}&quarter=${quarter}&view=${searchParams.get("view") ?? "quarter"}`}
+              >
+                <Download className="mr-2 h-4 w-4" aria-hidden />
+                Export CSV
+              </a>
+            </Button>
+          </div>
+        }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <KpiCard
           label="Time invested"
           value={`${Math.round(report.totalMinutes / 60)}h`}
@@ -168,6 +181,11 @@ function ReportsContent({
           label="Closed revenue"
           value={formatCurrency(report.closedRevenueCents, { compact: true })}
           tone="revenue"
+        />
+        <KpiCard
+          label="Pipeline"
+          value={formatCurrency(report.pipelineRevenueCents, { compact: true })}
+          hint="Open deals (all time)"
         />
         <KpiCard
           label="Net / ROI"

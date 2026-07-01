@@ -28,6 +28,17 @@ export function SignupForm() {
     defaultValues: { fullName: "", email: "", password: "" },
   });
 
+  async function demoLogin() {
+    const res = await fetch("/api/auth/demo-login", { method: "POST" });
+    const json = await res.json();
+    if (!res.ok) {
+      setError("root", { message: json.error ?? "Demo login failed" });
+      return;
+    }
+    router.push("/dashboard");
+    router.refresh();
+  }
+
   async function onSubmit(values: SignupValues) {
     if (devBypass) {
       await fetch("/api/auth/dev-login", { method: "POST" });
@@ -53,7 +64,24 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="space-y-4">
+      <Button type="button" className="w-full" onClick={demoLogin}>
+        Continue as Demo User
+      </Button>
+      <p className="text-center text-xs text-slate-500">
+        Demo: demo@clientledger.app / DemoPass123!
+      </p>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-slate-200" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-2 text-slate-400">Or sign up</span>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {devBypass ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           Dev mode: click Create account to skip authentication.
@@ -86,5 +114,6 @@ export function SignupForm() {
         </Link>
       </p>
     </form>
+    </div>
   );
 }

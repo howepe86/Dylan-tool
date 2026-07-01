@@ -72,7 +72,7 @@ export default async function DashboardPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <KpiCard
           label="Total revenue"
           value={formatCurrency(quarterly.closedRevenueCents, { compact: true })}
@@ -93,6 +93,12 @@ export default async function DashboardPage() {
           hint="Revenue minus expenses"
           icon={Activity}
           tone="neutral"
+        />
+        <KpiCard
+          label="Pipeline"
+          value={formatCurrency(quarterly.pipelineRevenueCents, { compact: true })}
+          hint="Open deals (all time)"
+          icon={TrendingUp}
         />
         <KpiCard
           label="Clients"

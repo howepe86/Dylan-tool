@@ -55,12 +55,27 @@ export function PeriodSelector({
           ))}
         </SelectContent>
       </Select>
+      <Select
+        value={String(quarter)}
+        onValueChange={(value) => navigate({ quarter: Number(value), view: "quarter" })}
+      >
+        <SelectTrigger className="w-[80px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {[1, 2, 3, 4].map((q) => (
+            <SelectItem key={q} value={String(q)}>
+              Q{q}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <Tabs
         value={view === "year" ? "year" : "quarter"}
         onValueChange={(value) => navigate({ view: value })}
       >
         <TabsList>
-          <TabsTrigger value="quarter">Q{quarter}</TabsTrigger>
+          <TabsTrigger value="quarter">Quarter</TabsTrigger>
           <TabsTrigger value="year">Full year</TabsTrigger>
         </TabsList>
       </Tabs>

@@ -54,7 +54,9 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/clients") ||
     pathname.startsWith("/reports") ||
     pathname.startsWith("/settings") ||
-    pathname.startsWith("/log");
+    pathname.startsWith("/log") ||
+    pathname.startsWith("/deals") ||
+    pathname.startsWith("/expenses");
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
@@ -80,6 +82,8 @@ export const config = {
     "/reports/:path*",
     "/settings/:path*",
     "/log/:path*",
+    "/deals/:path*",
+    "/expenses/:path*",
     "/login",
     "/signup",
     "/forgot-password",

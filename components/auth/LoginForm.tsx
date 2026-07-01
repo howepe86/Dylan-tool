@@ -19,11 +19,22 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
     setError,
   } = useForm<LoginValues>({
     defaultValues: { email: "", password: "" },
   });
+
+  async function demoLogin() {
+    const res = await fetch("/api/auth/demo-login", { method: "POST" });
+    const json = await res.json();
+    if (!res.ok) {
+      setError("root", { message: json.error ?? "Demo login failed" });
+      return;
+    }
+    router.push(searchParams.get("next") ?? "/dashboard");
+    router.refresh();
+  }
 
   async function onSubmit(values: LoginValues) {
     if (devBypass) {
@@ -51,37 +62,61 @@ export function LoginForm() {
       : null;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {devBypass ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          Dev mode: click Log in to skip authentication.
-        </p>
-      ) : null}
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" autoComplete="email" {...register("email")} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          {...register("password")}
-        />
-      </div>
+    <div className="space-y-4">
       {callbackError ? (
         <p className="text-sm text-rose-600">{callbackError}</p>
       ) : null}
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Signing in…" : "Log in"}
+      {errors.root ? (
+        <p className="text-sm text-rose-600">{errors.root.message}</p>
+      ) : null}
+      <Button type="button" className="w-full" onClick={demoLogin}>
+        Continue as Demo User
       </Button>
-      <p className="text-center text-sm text-slate-500">
-        No account?{" "}
-        <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
-          Sign up
-        </Link>
+      <p className="text-center text-xs text-slate-500">
+        Demo: demo@clientledger.app / DemoPass123!
       </p>
-    </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-slate-200" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-2 text-slate-400">Or sign in</span>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {devBypass ? (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Dev mode: auth bypass enabled locally.
+          </p>
+        ) : null}
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" autoComplete="email" {...register("email")} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            {...register("password")}
+          />
+        </div>
+        {callbackError ? (
+          <p className="text-sm text-rose-600">{callbackError}</p>
+        ) : null}
+        <Button type="submit" variant="outline" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Signing in…" : "Log in with email"}
+        </Button>
+        <p className="text-center text-sm text-slate-500">
+          No account?{" "}
+          <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+            Sign up
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }

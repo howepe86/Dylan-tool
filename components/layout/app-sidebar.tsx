@@ -4,8 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Briefcase,
   LayoutDashboard,
   PenLine,
+  Receipt,
   Settings,
   Users,
 } from "lucide-react";
@@ -16,6 +18,8 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/log", label: "Log activity", icon: PenLine },
+  { href: "/deals", label: "Deals", icon: Briefcase },
+  { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
