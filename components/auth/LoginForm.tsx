@@ -11,6 +11,20 @@ import { createClient } from "@/lib/supabase";
 
 type LoginValues = { email: string; password: string };
 
+function safeNextPath(raw: string | null): string {
+  if (!raw) return "/dashboard";
+  if (
+    !raw.startsWith("/") ||
+    raw.startsWith("//") ||
+    raw.includes("\\") ||
+    raw.startsWith("/login") ||
+    raw.startsWith("/signup")
+  ) {
+    return "/dashboard";
+  }
+  return raw;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -32,14 +46,14 @@ export function LoginForm() {
       setError("root", { message: json.error ?? "Demo login failed" });
       return;
     }
-    router.push(searchParams.get("next") ?? "/dashboard");
+    router.push(safeNextPath(searchParams.get("next")));
     router.refresh();
   }
 
   async function onSubmit(values: LoginValues) {
     if (devBypass) {
       await fetch("/api/auth/dev-login", { method: "POST" });
-      router.push(searchParams.get("next") ?? "/dashboard");
+      router.push(safeNextPath(searchParams.get("next")));
       router.refresh();
       return;
     }
@@ -52,7 +66,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push(searchParams.get("next") ?? "/dashboard");
+    router.push(safeNextPath(searchParams.get("next")));
     router.refresh();
   }
 

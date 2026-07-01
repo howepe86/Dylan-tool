@@ -54,7 +54,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/clients") ||
     pathname.startsWith("/reports") ||
     pathname.startsWith("/settings") ||
-    pathname.startsWith("/log") ||
+    pathname === "/log" ||
+    pathname.startsWith("/log/") ||
     pathname.startsWith("/deals") ||
     pathname.startsWith("/expenses");
 
@@ -62,6 +63,16 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (
+    isAuthPage &&
+    (request.nextUrl.searchParams.get("next") === "/login" ||
+      request.nextUrl.searchParams.get("next") === "/signup")
+  ) {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete("next");
     return NextResponse.redirect(url);
   }
 
