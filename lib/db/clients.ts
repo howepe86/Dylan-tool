@@ -156,7 +156,7 @@ export async function updateDeal(
   userId: string,
   id: string,
   input: Partial<
-    Pick<Deal, "title" | "amount_cents" | "status" | "closed_at" | "notes">
+    Pick<Deal, "title" | "amount_cents" | "status" | "closed_at" | "notes" | "stage_position" | "probability_percent" | "expected_close_date">
   >
 ) {
   const supabase = await getDataClient();
