@@ -1,4 +1,4 @@
-import { DealsBoard } from "@/components/dashboard/DealsBoard";
+import { KanbanPipeline } from "@/components/dashboard/KanbanPipeline";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { getAuthUser } from "@/lib/auth/session";
 import { listClients, listDeals } from "@/lib/db/clients";
@@ -15,10 +15,10 @@ export default async function DealsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Deals"
-        description="Pipeline and closed revenue by client."
+        title="Deal Pipeline"
+        description="Manage your sales pipeline with drag-and-drop kanban board."
       />
-      <DealsBoard deals={deals} clients={clients} />
+      <KanbanPipeline deals={deals} clients={clients} />
     </div>
   );
 }

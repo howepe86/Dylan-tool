@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ClientTimeline } from "@/components/dashboard/ClientTimeline";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -101,8 +102,11 @@ export default async function ClientDetailPage({
         />
       </div>
 
-      <Tabs defaultValue="activities">
+      <Tabs defaultValue="timeline">
         <TabsList>
+          <TabsTrigger value="timeline">
+            Timeline
+          </TabsTrigger>
           <TabsTrigger value="activities">
             Activities ({interactions.length})
           </TabsTrigger>
@@ -111,6 +115,15 @@ export default async function ClientDetailPage({
           </TabsTrigger>
           <TabsTrigger value="deals">Deals ({deals.length})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="timeline" className="mt-4">
+          <ClientTimeline 
+            client={client}
+            interactions={interactions}
+            expenses={expenses}
+            deals={deals}
+          />
+        </TabsContent>
 
         <TabsContent value="activities" className="mt-4">
           {interactions.length === 0 ? (
