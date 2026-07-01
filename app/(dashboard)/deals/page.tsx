@@ -16,7 +16,7 @@ export default async function DealsPage() {
     <div className="space-y-8">
       <PageHeader
         title="Deals"
-        description="Pipeline and closed revenue by client."
+        description="Pipeline and closed revenue — drag deals between columns."
       />
       <DealsBoard deals={deals} clients={clients} />
     </div>

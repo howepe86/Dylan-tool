@@ -108,11 +108,36 @@ export function DealsBoard({
     router.refresh();
   }
 
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<Deal["status"] | null>(null);
+
+  const columns: { status: Deal["status"]; deals: Deal[]; total: number }[] = [
+    { status: "pipeline", deals: pipeline, total: pipelineTotal },
+    { status: "closed", deals: closed, total: closedTotal },
+    { status: "lost", deals: lost, total: lost.reduce((s, d) => s + d.amount_cents, 0) },
+  ];
+
+  async function handleDrop(status: Deal["status"], dealId: string) {
+    const deal = deals.find((d) => d.id === dealId);
+    if (!deal || deal.status === status) return;
+    await updateStatus(dealId, status);
+    setDropTarget(null);
+    setDraggingId(null);
+  }
+
   function DealCard({ deal }: { deal: Deal }) {
     const client = clients.find((c) => c.id === deal.client_id);
     const isUpdating = updatingDealId === deal.id;
     return (
-      <Card>
+      <Card
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData("text/deal-id", deal.id);
+          setDraggingId(deal.id);
+        }}
+        onDragEnd={() => setDraggingId(null)}
+        className={`cursor-grab active:cursor-grabbing ${draggingId === deal.id ? "opacity-50" : ""}`}
+      >
         <CardContent className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -249,37 +274,46 @@ export function DealsBoard({
           icon={Briefcase}
         />
       ) : deals.length > 0 ? (
-        <div className="space-y-8">
-          {pipeline.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">Pipeline</h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pipeline.map((deal) => (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {columns.map(({ status, deals: columnDeals, total }) => (
+            <section
+              key={status}
+              className={`min-h-[200px] rounded-xl border-2 border-dashed p-3 transition-colors ${
+                dropTarget === status
+                  ? "border-indigo-400 bg-indigo-50/50"
+                  : "border-slate-200 bg-slate-50/30"
+              }`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDropTarget(status);
+              }}
+              onDragLeave={() => setDropTarget(null)}
+              onDrop={(e) => {
+                e.preventDefault();
+                const dealId = e.dataTransfer.getData("text/deal-id") || draggingId;
+                if (dealId) handleDrop(status, dealId);
+              }}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-900">
+                  {statusLabels[status]}
+                </h2>
+                <span className="text-xs text-slate-500">
+                  {columnDeals.length} · {formatCurrency(total, { compact: true })}
+                </span>
+              </div>
+              <div className="space-y-3">
+                {columnDeals.map((deal) => (
                   <DealCard key={deal.id} deal={deal} />
                 ))}
+                {columnDeals.length === 0 ? (
+                  <p className="py-8 text-center text-xs text-slate-400">
+                    Drop deals here
+                  </p>
+                ) : null}
               </div>
             </section>
-          ) : null}
-          {closed.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">Closed</h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {closed.map((deal) => (
-                  <DealCard key={deal.id} deal={deal} />
-                ))}
-              </div>
-            </section>
-          ) : null}
-          {lost.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">Lost</h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {lost.map((deal) => (
-                  <DealCard key={deal.id} deal={deal} />
-                ))}
-              </div>
-            </section>
-          ) : null}
+          ))}
         </div>
       ) : null}
     </div>

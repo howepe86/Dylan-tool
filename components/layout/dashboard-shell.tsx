@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import {
   CommandPalette,
   useCommandPalette,
@@ -35,12 +36,13 @@ export function DashboardShell({
           onSearchClick={() => setOpen(true)}
           periodLabel={periodLabel}
         />
-        <main className="flex-1 overflow-y-auto" id="main-content">
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0" id="main-content">
           <div className="mx-auto max-w-content px-4 py-6 lg:px-8 lg:py-8">
             {children}
           </div>
         </main>
       </div>
+      <MobileBottomNav />
       <QuickLogFab />
       <CommandPalette open={open} onClose={() => setOpen(false)} />
     </div>

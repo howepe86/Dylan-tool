@@ -310,3 +310,28 @@ export function buildDealStats(deals: Deal[]): DealStats {
     winRate: decided > 0 ? Math.round((closed.length / decided) * 100) : null,
   };
 }
+
+export function buildExpenseCategoryBreakdown(
+  expenses: Expense[],
+  year: number,
+  quarter?: number
+): { category: string; amountCents: number }[] {
+  const filtered = expenses.filter((item) => {
+    const date = parseISO(item.incurred_at);
+    if (date.getFullYear() !== year) return false;
+    if (quarter !== undefined && getQuarter(date) !== quarter) return false;
+    return true;
+  });
+
+  const totals = new Map<string, number>();
+  for (const expense of filtered) {
+    totals.set(
+      expense.category,
+      (totals.get(expense.category) ?? 0) + expense.amount_cents
+    );
+  }
+
+  return [...totals.entries()]
+    .map(([category, amountCents]) => ({ category, amountCents }))
+    .sort((a, b) => b.amountCents - a.amountCents);
+}

@@ -4,7 +4,7 @@ const footerLinks = {
   Product: [
     { label: "Use cases", href: "/#use-cases" },
     { label: "Platform", href: "/#features" },
-    { label: "Pricing", href: "/signup" },
+    { label: "Pricing", href: "/pricing" },
   ],
   Resources: [
     { label: "Try demo", href: "/login" },

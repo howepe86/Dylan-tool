@@ -13,6 +13,7 @@ import { RevenueExpenseChart } from "@/components/charts/revenue-expense-chart";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { RecentExpenses } from "@/components/dashboard/RecentExpenses";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,6 +96,13 @@ export default async function DashboardPage() {
             </Button>
           </div>
         }
+      />
+
+      <OnboardingChecklist
+        hasClients={clients.length > 0}
+        hasActivities={interactions.length > 0}
+        hasExpenses={expenses.length > 0}
+        hasDeals={deals.length > 0}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">

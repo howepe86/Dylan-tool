@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Receipt } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { ReceiptScanner } from "@/components/dashboard/ReceiptScanner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -101,6 +102,15 @@ export function ExpensesList({
       {showForm ? (
         <Card className="p-6">
           <form onSubmit={handleCreate} className="grid max-w-lg gap-4">
+            <ReceiptScanner
+              onParsed={({ amount, description, category: cat }) => {
+                const amountEl = document.getElementById("expense-amount") as HTMLInputElement | null;
+                const descEl = document.getElementById("description") as HTMLInputElement | null;
+                if (amountEl) amountEl.value = String(amount);
+                if (descEl && description) descEl.value = description;
+                if (cat) setCategory(cat);
+              }}
+            />
             <div className="space-y-2">
               <Label htmlFor="clientId">Client</Label>
               <Select value={clientId} onValueChange={setClientId} required>
@@ -119,7 +129,7 @@ export function ExpensesList({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount (USD)</Label>
-                <Input id="amount" name="amount" type="number" min="0" step="0.01" required />
+                <Input id="expense-amount" name="amount" type="number" min="0" step="0.01" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>

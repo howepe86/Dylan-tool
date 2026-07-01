@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ReceiptScanner } from "@/components/dashboard/ReceiptScanner";
+import { SmartSuggestions } from "@/components/dashboard/SmartSuggestions";
+import {
+  suggestActivityType,
+  suggestDuration,
+  suggestExpenseCategory,
+} from "@/lib/categorize";
 import { ACTIVITY_TYPES, EXPENSE_CATEGORIES } from "@/lib/reports";
 import type { Client } from "@/types/database";
 
@@ -37,6 +44,19 @@ export function ActivityLogForm({ clients }: { clients: Client[] }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const activitySuggestion = useMemo(
+    () => suggestActivityType(title, notes),
+    [title, notes]
+  );
+  const expenseSuggestion = useMemo(
+    () => suggestExpenseCategory(title, notes),
+    [title, notes]
+  );
+  const durationSuggestion = useMemo(
+    () => suggestDuration(activityType as (typeof ACTIVITY_TYPES)[number]["id"]),
+    [activityType]
+  );
 
   if (clients.length === 0) {
     return (
@@ -147,6 +167,15 @@ export function ActivityLogForm({ clients }: { clients: Client[] }) {
         />
       </div>
 
+      <SmartSuggestions
+        activity={activitySuggestion}
+        expense={expenseSuggestion}
+        durationMinutes={title.trim() ? durationSuggestion.minutes : undefined}
+        onApplyActivity={setActivityType}
+        onApplyExpense={setExpenseCategory}
+        onApplyDuration={(m) => setDurationMinutes(String(m))}
+      />
+
       <div className="space-y-2">
         <Label htmlFor="activityType">Activity type</Label>
         <Select value={activityType} onValueChange={setActivityType}>
@@ -202,6 +231,13 @@ export function ActivityLogForm({ clients }: { clients: Client[] }) {
           <CardTitle className="text-base">Expense (optional)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <ReceiptScanner
+            onParsed={({ amount, description, category }) => {
+              setExpenseAmount(String(amount));
+              if (description) setExpenseDescription(description);
+              if (category) setExpenseCategory(category);
+            }}
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="expenseAmount">Amount (USD)</Label>

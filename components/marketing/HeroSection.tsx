@@ -26,8 +26,8 @@ export function HeroSection() {
         </h1>
 
         <p className="animate-fade-up-delay-2 mx-auto mt-6 max-w-2xl text-lg text-slate-600 sm:text-xl">
-          Log lunches, golf outings, and meetings. Track expenses, pipeline, and
-          closed revenue — then see quarterly ROI by client in one clean dashboard.
+          The only CRM built for client entertainment ROI — smart activity tagging,
+          receipt scan, kanban pipeline, and time-adjusted reports in one dashboard.
         </p>
 
         <div className="animate-fade-up-delay-3 mt-10 flex flex-wrap items-center justify-center gap-4">

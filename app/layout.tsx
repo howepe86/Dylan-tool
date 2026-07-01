@@ -1,4 +1,5 @@
 import { QueryProvider } from "@/components/providers/query-provider";
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
@@ -27,6 +28,7 @@ export default function RootLayout({
           Skip to main content
         </a>
         <QueryProvider>{children}</QueryProvider>
+        <Analytics />
       </body>
     </html>
   );

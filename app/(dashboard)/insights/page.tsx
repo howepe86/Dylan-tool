@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, Briefcase, Trophy } from "lucide-react";
 
 import { ActivityBreakdownChart } from "@/components/charts/activity-breakdown-chart";
+import { ExpenseCategoryChart } from "@/components/charts/expense-category-chart";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import {
   buildActivityBreakdown,
   buildClientHealthScores,
   buildDealStats,
+  buildExpenseCategoryBreakdown,
   findStaleClients,
   type HealthTier,
 } from "@/lib/insights";
@@ -54,6 +56,7 @@ export default async function InsightsPage() {
   );
   const staleClients = findStaleClients(clients, interactions);
   const activityBreakdown = buildActivityBreakdown(interactions, year, quarter);
+  const expenseBreakdown = buildExpenseCategoryBreakdown(expenses, year, quarter);
   const dealStats = buildDealStats(deals);
 
   return (
@@ -99,6 +102,26 @@ export default async function InsightsPage() {
           icon={AlertTriangle}
           tone={staleClients.length > 0 ? "expense" : "neutral"}
         />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Activity mix this quarter</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ActivityBreakdownChart data={activityBreakdown} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Expense breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExpenseCategoryChart data={expenseBreakdown} />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -174,15 +197,6 @@ export default async function InsightsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Activity mix this quarter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ActivityBreakdownChart data={activityBreakdown} />
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/format/currency";
+import { computeEnhancedRoi } from "@/lib/roi";
 import type { ClientSummary, PeriodReport } from "@/types/database";
 
 const columnHelper = createColumnHelper<ClientSummary>();
@@ -75,6 +76,26 @@ const columns = [
         +{formatCurrency(getValue())}
       </span>
     ),
+  }),
+  columnHelper.display({
+    id: "roi",
+    header: () => <span className="block text-right">ROI</span>,
+    cell: ({ row }) => {
+      const exp = row.original.totalExpenseCents;
+      const rev = row.original.closedRevenueCents;
+      if (exp === 0) return <span className="block text-right text-slate-400">—</span>;
+      const roi = Math.round(((rev - exp) / exp) * 100);
+      return (
+        <span
+          className={`block text-right font-medium tabular-nums ${
+            roi >= 0 ? "text-emerald-600" : "text-rose-600"
+          }`}
+        >
+          {roi >= 0 ? "+" : ""}
+          {roi}%
+        </span>
+      );
+    },
   }),
 ];
 
@@ -146,6 +167,7 @@ function ReportsContent({
     searchParams.get("view") === "year" ? yearlyReport : quarterlyReport;
 
   const netCents = report.closedRevenueCents - report.totalExpenseCents;
+  const enhanced = computeEnhancedRoi(report);
 
   return (
     <div className="space-y-8" id="report-print-area">
@@ -204,12 +226,44 @@ function ReportsContent({
               : `${netCents >= 0 ? "+" : ""}${formatCurrency(netCents, { compact: true })} · ${report.roiPercent}%`
           }
           hint={
-            report.roiPercent === null ? "No expenses to compute ROI" : undefined
+            report.roiPercent === null ? "No expenses to compute ROI" : "Expense-based ROI"
           }
         />
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="border-indigo-100 bg-gradient-to-r from-indigo-50/80 to-white">
+        <div className="grid gap-4 p-6 sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Time cost (est.)
+            </p>
+            <p className="mt-1 text-xl font-bold text-slate-900">
+              {formatCurrency(enhanced.timeCostCents, { compact: true })}
+            </p>
+            <p className="text-xs text-slate-500">At $150/hr billable rate</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Total investment
+            </p>
+            <p className="mt-1 text-xl font-bold text-rose-600">
+              {formatCurrency(enhanced.totalInvestmentCents, { compact: true })}
+            </p>
+            <p className="text-xs text-slate-500">Expenses + time</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Adjusted ROI
+            </p>
+            <p className="mt-1 text-xl font-bold text-emerald-600">
+              {enhanced.roiPercent !== null ? `${enhanced.roiPercent}%` : "—"}
+            </p>
+            <p className="text-xs text-slate-500">Includes your time investment</p>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="overflow-hidden shadow-sm">
         <div className="border-b border-slate-200 px-6 py-4">
           <h2 className="text-base font-semibold text-slate-900">
             Per-client breakdown
