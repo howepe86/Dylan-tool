@@ -9,7 +9,14 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
-function validateEnv() {
+type Env = z.infer<typeof envSchema>;
+
+let cached: Env | null = null;
+
+/** Validated env — throws at runtime if misconfigured, not at module import during build. */
+export function getEnv(): Env {
+  if (cached) return cached;
+
   const parsed = envSchema.safeParse(process.env);
 
   if (!parsed.success) {
@@ -22,14 +29,14 @@ function validateEnv() {
     );
   }
 
-  return parsed.data;
+  cached = parsed.data;
+  return cached;
 }
 
-const env = validateEnv();
-
-export const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
-export const SUPABASE_ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-export const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-export const APP_URL = env.NEXT_PUBLIC_APP_URL;
-export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID ?? "";
-export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET ?? "";
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+export const SUPABASE_SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
