@@ -1,0 +1,26 @@
+-- Voice memo storage bucket
+
+insert into storage.buckets (id, name, public)
+values ('voice-memos', 'voice-memos', true)
+on conflict (id) do nothing;
+
+create policy "Users upload own voice memos"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'voice-memos'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+create policy "Users read own voice memos"
+  on storage.objects for select
+  using (
+    bucket_id = 'voice-memos'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+create policy "Users delete own voice memos"
+  on storage.objects for delete
+  using (
+    bucket_id = 'voice-memos'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

@@ -1,0 +1,26 @@
+---
+description: Supabase database and migration conventions
+globs: "{lib/db/**/*.ts,supabase/**/*.sql,types/database.ts}"
+alwaysApply: false
+---
+
+# Database
+
+- All queries in `@/lib/db/` using the Supabase **server** client
+- Row Level Security enabled on all user-facing tables — users access only their own rows
+- Migrations in `supabase/migrations/` run in order (001 → 002)
+
+## Tables
+
+- `profiles` — extends `auth.users`; auto-created on signup
+- `clients` — client name, company, email, notes
+- `interactions` — time spent (activity_type, duration_minutes, input_source)
+- `expenses` — amount_cents linked to client (+ optional interaction)
+- `deals` — revenue (pipeline | closed | lost)
+- `calendar_connections` — OAuth tokens for Google/Outlook (phase 2)
+
+## Storage
+
+- Bucket `voice-memos` — user-scoped paths `{user_id}/{uuid}.ext`
+
+Use typed row types from `types/database.ts`.

@@ -1,0 +1,28 @@
+---
+description: Next.js API route conventions
+globs: app/api/**/*.ts
+alwaysApply: false
+---
+
+# API Routes
+
+- Validate all inputs with **zod** schemas
+- Authenticate via Supabase session before any mutation or user-scoped read
+- Wrap handlers in try/catch; return typed JSON error responses with appropriate HTTP status codes
+- Never leak secrets in error messages
+
+## Patterns
+
+```typescript
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+const body = schema.parse(await request.json());
+```
+
+## Route responsibilities
+
+- `POST /api/clients` — create client
+- `POST /api/activities` — log interaction + optional expense/deal
+- `POST /api/voice/upload` — upload audio to Supabase Storage
+- `GET /api/auth/callback` — Supabase OAuth/PKCE callback (safe `next` redirect)

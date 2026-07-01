@@ -1,0 +1,31 @@
+---
+description: ClientLedger core stack, boundaries, and import conventions
+alwaysApply: true
+---
+
+# ClientLedger Core
+
+ClientLedger tracks client time, entertainment expenses, and closed revenue.
+
+**Stack (do not deviate):** Next.js 14 App Router, TypeScript, Tailwind CSS, Supabase (auth + db + storage), Vercel, npm.
+
+## Import boundaries
+
+- Supabase: `@/lib/supabase.ts` (browser) or `@/lib/supabase-server.ts` (server)
+- Admin / storage service ops: `@/lib/supabase-admin.ts` (service role)
+- Database: `@/lib/db/*` only — no raw Supabase queries in components or pages
+- Reports: `@/lib/reports.ts` for period rollups and formatting
+- Env vars: `@/lib/env.ts` only — never `process.env` elsewhere
+
+## General rules
+
+- TypeScript everywhere; no plain JavaScript
+- App Router only (`app/`, not `pages/`)
+- Functional components with hooks; no class components
+- Tailwind only — no CSS modules or styled-components
+- Never hardcode secrets, API keys, or URLs
+- Prefer server components; use client components only when interactivity is required
+
+## Product north star
+
+Users log client touchpoints (lunch, dinner, golf, meetings) with optional expenses and deal value, then review quarterly and yearly ROI by client.
