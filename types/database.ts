@@ -9,7 +9,14 @@ export type ActivityType =
 
 export type InputSource = "manual" | "calendar" | "voice";
 
-export type DealStatus = "pipeline" | "closed" | "lost";
+export type DealStatus = 
+  | "lead"         // Initial interest
+  | "qualified"    // Qualified opportunity  
+  | "proposal"     // Proposal sent
+  | "negotiation"  // In negotiation
+  | "pipeline"     // Generic pipeline (for backward compatibility)
+  | "closed"       // Won
+  | "lost";        // Lost
 
 export interface Client {
   id: string;
@@ -62,6 +69,10 @@ export interface Deal {
   status: DealStatus;
   closed_at: string | null;
   notes: string | null;
+  stage_position: number;
+  probability_percent: number;
+  expected_close_date: string | null;
+  last_activity_date: string;
   created_at: string;
   updated_at: string;
 }
