@@ -23,19 +23,19 @@ export function DashboardShell({
   const { open, setOpen } = useCommandPalette();
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       <AppSidebar
         email={email}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
           onMenuClick={() => setMobileOpen(true)}
           onSearchClick={() => setOpen(true)}
           periodLabel={periodLabel}
         />
-        <main className="flex-1 overflow-auto" id="main-content">
+        <main className="flex-1 overflow-y-auto" id="main-content">
           <div className="mx-auto max-w-content px-4 py-6 lg:px-8 lg:py-8">
             {children}
           </div>

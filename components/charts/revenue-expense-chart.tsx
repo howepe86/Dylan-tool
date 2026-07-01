@@ -72,8 +72,8 @@ export function RevenueExpenseChart({ data }: { data: ChartPoint[] }) {
   }
 
   return (
-    <div className="h-72 w-full" aria-label="Revenue versus expenses bar chart">
-      <div className="mb-4 flex items-center gap-5 text-xs text-slate-600">
+    <div className="w-full" aria-label="Revenue versus expenses bar chart">
+      <div className="mb-3 flex items-center gap-5 text-xs text-slate-600">
         <span className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" aria-hidden />
           Revenue
@@ -83,7 +83,7 @@ export function RevenueExpenseChart({ data }: { data: ChartPoint[] }) {
           Expenses
         </span>
       </div>
-      <ResponsiveContainer width="100%" height="90%">
+      <ResponsiveContainer width="100%" height={240}>
         <BarChart
           data={data}
           margin={{ top: 4, right: 4, left: 0, bottom: 0 }}

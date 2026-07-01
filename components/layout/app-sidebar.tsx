@@ -108,7 +108,7 @@ export function AppSidebar({
 
   return (
     <>
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
+      <aside className="hidden h-screen w-64 shrink-0 flex flex-col border-r border-slate-200 bg-white lg:flex">
         {sidebarContent}
       </aside>
 

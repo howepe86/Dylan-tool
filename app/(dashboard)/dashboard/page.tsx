@@ -6,7 +6,6 @@ import {
   DollarSign,
   Lightbulb,
   TrendingUp,
-  Trophy,
   Users,
 } from "lucide-react";
 
@@ -15,7 +14,6 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { RecentExpenses } from "@/components/dashboard/RecentExpenses";
-import { WeeklyGoal } from "@/components/dashboard/WeeklyGoal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,13 +33,8 @@ import {
   listInteractions,
 } from "@/lib/db/clients";
 import { formatCurrency } from "@/lib/format/currency";
-import {
-  buildClientHealthScores,
-  computePeriodDelta,
-  findStaleClients,
-} from "@/lib/insights";
+import { computePeriodDelta, findStaleClients } from "@/lib/insights";
 import { buildMonthlyTrend, buildPeriodReport } from "@/lib/reports";
-import { startOfWeek, parseISO, isAfter } from "date-fns";
 
 export default async function DashboardPage() {
   const user = await getAuthUser();
@@ -78,24 +71,11 @@ export default async function DashboardPage() {
   });
 
   const deltas = computePeriodDelta(quarterly, previousQuarter);
-  const healthScores = buildClientHealthScores(
-    clients,
-    interactions,
-    expenses,
-    deals,
-    year,
-    quarter
-  );
   const staleClients = findStaleClients(clients, interactions).slice(0, 3);
 
   const chartData = buildMonthlyTrend({ year, quarter, expenses, deals });
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weeklyCount = interactions.filter((i) =>
-    isAfter(parseISO(i.occurred_at), weekStart)
-  ).length;
   const netCents = quarterly.closedRevenueCents - quarterly.totalExpenseCents;
   const recent = interactions.slice(0, 5);
-  const topClient = healthScores[0];
 
   return (
     <div className="space-y-8">
@@ -160,7 +140,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Revenue vs. expenses</CardTitle>
@@ -170,45 +150,12 @@ export default async function DashboardPage() {
               {quarterly.periodLabel}
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-4">
             <RevenueExpenseChart data={chartData} />
           </CardContent>
         </Card>
 
         <div className="space-y-6">
-          <WeeklyGoal count={weeklyCount} />
-          {topClient ? (
-            <Card className="border-indigo-100 bg-gradient-to-br from-indigo-50/50 to-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Trophy className="h-4 w-4 text-indigo-600" aria-hidden />
-                  Top client
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg font-bold text-slate-900">{topClient.clientName}</p>
-                <p className="text-sm text-slate-500">{topClient.company}</p>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-bold text-white">
-                    Health {topClient.score}
-                  </span>
-                  {topClient.roiPercent !== null ? (
-                    <span className="text-sm font-medium text-emerald-600">
-                      {topClient.roiPercent >= 0 ? "+" : ""}
-                      {topClient.roiPercent}% ROI
-                    </span>
-                  ) : null}
-                </div>
-                <Link
-                  href={`/clients/${topClient.clientId}`}
-                  className="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  View profile →
-                </Link>
-              </CardContent>
-            </Card>
-          ) : null}
-
           {staleClients.length > 0 ? (
             <Card className="border-amber-100">
               <CardHeader className="pb-2">
