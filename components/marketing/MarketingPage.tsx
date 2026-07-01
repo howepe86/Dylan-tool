@@ -15,18 +15,18 @@ export async function MarketingPage({
   const isAuth = variant === "auth";
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen flex-col bg-white text-slate-900">
       <SiteHeader />
       <main
         className={
           isAuth
-            ? "flex flex-1 items-center justify-center px-6 py-12"
-            : "mx-auto w-full max-w-content flex-1 px-6 py-16 lg:px-8"
+            ? "gradient-mesh relative flex flex-1 items-center justify-center px-6 py-12"
+            : "mx-auto w-full max-w-content flex-1 px-6 lg:px-8"
         }
       >
         {children}
       </main>
-      <SiteFooter />
+      {!isAuth ? <SiteFooter /> : null}
     </div>
   );
 }

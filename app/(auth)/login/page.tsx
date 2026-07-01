@@ -7,9 +7,9 @@ export default function LoginPage() {
   return (
     <AuthPageShell
       title="Welcome back"
-      description="Log in to track client time, expenses, and revenue."
+      description="Jump into the live demo or sign in with your account."
     >
-      <Suspense fallback={<p className="text-sm text-zinc-400">Loading...</p>}>
+      <Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
         <LoginForm />
       </Suspense>
     </AuthPageShell>

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
+import { Sparkles } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,11 +85,16 @@ export function LoginForm() {
       {errors.root ? (
         <p className="text-sm text-rose-600">{errors.root.message}</p>
       ) : null}
-      <Button type="button" className="w-full" onClick={demoLogin}>
+      <Button
+        type="button"
+        className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 shadow-md shadow-indigo-200 hover:from-indigo-500 hover:to-violet-500"
+        onClick={demoLogin}
+      >
+        <Sparkles className="mr-2 h-4 w-4" aria-hidden />
         Continue as Demo User
       </Button>
       <p className="text-center text-xs text-slate-500">
-        Demo: demo@clientledger.app / DemoPass123!
+        Pre-loaded with clients, activities &amp; deals — no setup needed
       </p>
 
       <div className="relative">

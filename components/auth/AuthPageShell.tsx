@@ -12,9 +12,9 @@ export async function AuthPageShell({
 }) {
   return (
     <MarketingPage variant="auth">
-      <Card className="w-full max-w-md shadow-sm">
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
+      <Card className="w-full max-w-md border-slate-200/80 shadow-xl shadow-indigo-100/30 backdrop-blur">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>{children}</CardContent>

@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { Activity, Clock, DollarSign, TrendingUp, Users } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  Clock,
+  DollarSign,
+  Lightbulb,
+  TrendingUp,
+  Trophy,
+  Users,
+} from "lucide-react";
 
 import { RevenueExpenseChart } from "@/components/charts/revenue-expense-chart";
 import { EmptyState } from "@/components/dashboard/empty-state";
@@ -24,6 +33,11 @@ import {
   listInteractions,
 } from "@/lib/db/clients";
 import { formatCurrency } from "@/lib/format/currency";
+import {
+  buildClientHealthScores,
+  computePeriodDelta,
+  findStaleClients,
+} from "@/lib/insights";
 import { buildMonthlyTrend, buildPeriodReport } from "@/lib/reports";
 
 export default async function DashboardPage() {
@@ -32,6 +46,8 @@ export default async function DashboardPage() {
 
   const year = new Date().getFullYear();
   const quarter = Math.floor(new Date().getMonth() / 3) + 1;
+  const prevQuarter = quarter === 1 ? 4 : quarter - 1;
+  const prevYear = quarter === 1 ? year - 1 : year;
 
   const [clients, interactions, expenses, deals] = await Promise.all([
     listClients(user.id),
@@ -49,16 +65,30 @@ export default async function DashboardPage() {
     deals,
   });
 
-  const chartData = buildMonthlyTrend({
-    year,
-    quarter,
+  const previousQuarter = buildPeriodReport({
+    year: prevYear,
+    quarter: prevQuarter,
+    clients,
+    interactions,
     expenses,
     deals,
   });
 
-  const netCents =
-    quarterly.closedRevenueCents - quarterly.totalExpenseCents;
+  const deltas = computePeriodDelta(quarterly, previousQuarter);
+  const healthScores = buildClientHealthScores(
+    clients,
+    interactions,
+    expenses,
+    deals,
+    year,
+    quarter
+  );
+  const staleClients = findStaleClients(clients, interactions).slice(0, 3);
+
+  const chartData = buildMonthlyTrend({ year, quarter, expenses, deals });
+  const netCents = quarterly.closedRevenueCents - quarterly.totalExpenseCents;
   const recent = interactions.slice(0, 5);
+  const topClient = healthScores[0];
 
   return (
     <div className="space-y-8">
@@ -66,9 +96,17 @@ export default async function DashboardPage() {
         title="Dashboard"
         description={`Financial overview for ${quarterly.periodLabel}`}
         actions={
-          <Button asChild>
-            <Link href="/log">Log activity</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link href="/insights">
+                <Lightbulb className="mr-2 h-4 w-4" aria-hidden />
+                Insights
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/log">Log activity</Link>
+            </Button>
+          </div>
         }
       />
 
@@ -79,6 +117,8 @@ export default async function DashboardPage() {
           hint="Closed deals this quarter"
           icon={TrendingUp}
           tone="revenue"
+          delta={deltas.revenueDelta}
+          deltaLabel="vs last Q"
         />
         <KpiCard
           label="Total expenses"
@@ -86,6 +126,9 @@ export default async function DashboardPage() {
           hint="Client entertainment & travel"
           icon={DollarSign}
           tone="expense"
+          delta={deltas.expenseDelta}
+          deltaLabel="vs last Q"
+          invertDelta
         />
         <KpiCard
           label="Net"
@@ -105,26 +148,97 @@ export default async function DashboardPage() {
           value={String(clients.length)}
           hint={`${Math.round(quarterly.totalMinutes / 60)}h invested`}
           icon={Users}
+          delta={deltas.minutesDelta}
+          deltaLabel="time vs last Q"
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue vs. expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RevenueExpenseChart data={chartData} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">Revenue vs. expenses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RevenueExpenseChart data={chartData} />
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          {topClient ? (
+            <Card className="border-indigo-100 bg-gradient-to-br from-indigo-50/50 to-white">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Trophy className="h-4 w-4 text-indigo-600" aria-hidden />
+                  Top client
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-bold text-slate-900">{topClient.clientName}</p>
+                <p className="text-sm text-slate-500">{topClient.company}</p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-bold text-white">
+                    Health {topClient.score}
+                  </span>
+                  {topClient.roiPercent !== null ? (
+                    <span className="text-sm font-medium text-emerald-600">
+                      {topClient.roiPercent >= 0 ? "+" : ""}
+                      {topClient.roiPercent}% ROI
+                    </span>
+                  ) : null}
+                </div>
+                <Link
+                  href={`/clients/${topClient.clientId}`}
+                  className="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                >
+                  View profile →
+                </Link>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {staleClients.length > 0 ? (
+            <Card className="border-amber-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" aria-hidden />
+                  Needs follow-up
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {staleClients.map((client) => (
+                  <Link
+                    key={client.clientId}
+                    href={`/clients/${client.clientId}`}
+                    className="block rounded-lg bg-amber-50/50 px-3 py-2 text-sm transition-colors hover:bg-amber-50"
+                  >
+                    <p className="font-medium text-slate-900">{client.clientName}</p>
+                    <p className="text-xs text-slate-500">
+                      {client.daysSinceContact >= 999
+                        ? "No contact logged"
+                        : `${client.daysSinceContact}d since last touch`}
+                    </p>
+                  </Link>
+                ))}
+                <Link
+                  href="/insights"
+                  className="block pt-1 text-xs font-medium text-indigo-600 hover:text-indigo-500"
+                >
+                  View all reminders →
+                </Link>
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
+      </div>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Recent activity</h2>
           <Link
-            href="/reports"
+            href="/activities"
             className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
           >
-            View reports
+            Full timeline
           </Link>
         </div>
         {recent.length === 0 ? (
@@ -150,7 +264,7 @@ export default async function DashboardPage() {
                 {recent.map((item) => {
                   const client = clients.find((c) => c.id === item.client_id);
                   return (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} className="transition-colors hover:bg-slate-50/80">
                       <TableCell className="font-medium text-slate-900">
                         {item.title}
                       </TableCell>
