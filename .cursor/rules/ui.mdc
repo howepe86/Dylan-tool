@@ -54,6 +54,7 @@ Dashboard for tracking client expenses and revenue across quarterly, yearly, and
 
 - One component per file; route-specific components colocated with route
 - Extend shadcn via `className` + `cn()` — don't fork primitives
+- **Filenames in `components/ui/` must be lowercase** (e.g. `button.tsx`) — Vercel/Linux is case-sensitive
 - `focus-visible:` on all interactive elements
 - Loading: skeleton loaders matching layout — not spinners for cards/tables
 - Empty states: friendly message + CTA
