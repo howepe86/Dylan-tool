@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { DEMO_EMAIL, DEMO_PASSWORD, isDemoModeEnabled } from "@/lib/auth/demo";
+import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/auth/demo";
 import { seedDemoUserData } from "@/lib/seed/demo-data";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
 export async function POST() {
-  if (!isDemoModeEnabled() && process.env.NODE_ENV === "production") {
-    return NextResponse.json({ error: "Demo login is disabled" }, { status: 403 });
-  }
-
   try {
     const admin = createAdminClient();
     const supabase = await createClient();
